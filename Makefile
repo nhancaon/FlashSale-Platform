@@ -8,9 +8,9 @@ GO_IMAGE ?= golang:1.26
 GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm -v "$(CURDIR):/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gobuild:/root/.cache/go-build -e TEST_REDIS_ADDR=$(TEST_REDIS_ADDR)
 
 GO_SERVICES := ratelimiter-go inventory-go
-JAVA_SERVICES := ratelimiter-java inventory-java
+JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: up-apps down-apps e2e chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -59,3 +59,19 @@ check-lua: ## Script Lua của rate limiter phải giống nhau giữa Go và Ja
 
 contract-test: ## Contract test cho inventory-go và inventory-java x 3 chiến lược (cần make up + db-migrate)
 	bash contract-tests/run.sh
+
+# ---- application stack (needs make up + make db-migrate first) ----
+INVENTORY_IMPL ?= go
+COMPOSE_APPS = $(COMPOSE) -f deploy/compose/docker-compose.apps.yml
+
+up-apps: .env ## Build và chạy order + inventory (INVENTORY_IMPL=go|java)
+	INVENTORY_IMPL=$(INVENTORY_IMPL) $(COMPOSE_APPS) --profile inventory-$(INVENTORY_IMPL) up -d --build --wait order inventory-$(INVENTORY_IMPL)
+
+down-apps: .env ## Dừng các service ứng dụng
+	$(COMPOSE_APPS) --profile inventory-go --profile inventory-java --profile ratelimiter-go --profile ratelimiter-java stop order inventory-go inventory-java ratelimiter-go ratelimiter-java
+
+e2e: ## End-to-end: tạo đơn qua order -> inventory -> Oracle -> outbox (cần make up-apps)
+	bash scripts/e2e-order.sh
+
+chaos: ## Chaos test: tắt inventory, breaker mở, tự hồi phục (cần make up-apps)
+	bash scripts/chaos-order.sh

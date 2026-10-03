@@ -1,0 +1,95 @@
+# Application services. Use together with docker-compose.yml (infrastructure):
+#   make up-apps INVENTORY_IMPL=go|java
+# Every service listens on 8080 inside its container; host ports are 8081..8085.
+# CPU / memory limits come from APP_CPUS / APP_MEM so benchmarks can compare Go and Java fairly.
+
+x-limits: &limits
+  cpus: ${APP_CPUS:-2}
+  mem_limit: ${APP_MEM:-1g}
+
+x-db-env: &db-env
+  DB_HOST: oracle
+  DB_SERVICE: ${ORACLE_SERVICE:-FREEPDB1}
+  DB_USER: ${APP_USER}
+  DB_PASSWORD: ${APP_USER_PASSWORD}
+  DB_POOL_MAX: ${DB_POOL_MAX:-20}
+
+x-healthcheck: &healthcheck
+  test: ["CMD-SHELL", "wget -qO- http://localhost:8080/readyz > /dev/null || exit 1"]
+  interval: 5s
+  timeout: 3s
+  retries: 24
+  start_period: 5s
+
+services:
+  ratelimiter-go:
+    profiles: [ratelimiter-go]
+    build: ../../services/ratelimiter-go
+    image: flashsale/ratelimiter-go
+    <<: *limits
+    environment:
+      RATELIMIT_ALGORITHM: ${RATELIMIT_ALGORITHM:-token_bucket}
+      REDIS_ADDR: redis:6379
+    ports: ["8081:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      redis: { condition: service_healthy }
+
+  ratelimiter-java:
+    profiles: [ratelimiter-java]
+    build: ../../services/ratelimiter-java
+    image: flashsale/ratelimiter-java
+    <<: *limits
+    environment:
+      RATELIMIT_ALGORITHM: ${RATELIMIT_ALGORITHM:-token_bucket}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    ports: ["8082:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      redis: { condition: service_healthy }
+
+  inventory-go:
+    profiles: [inventory-go]
+    build: ../../services/inventory-go
+    image: flashsale/inventory-go
+    <<: *limits
+    environment:
+      <<: *db-env
+      REDIS_ADDR: redis:6379
+      STOCK_STRATEGY: ${STOCK_STRATEGY:-atomic}
+    ports: ["8083:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      oracle: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  inventory-java:
+    profiles: [inventory-java]
+    build: ../../services/inventory-java
+    image: flashsale/inventory-java
+    <<: *limits
+    environment:
+      <<: *db-env
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      STOCK_STRATEGY: ${STOCK_STRATEGY:-atomic}
+      DB_POOL_TIMEOUT_MS: "30000"
+    ports: ["8084:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      oracle: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  order:
+    build: ../../services/order
+    image: flashsale/order
+    <<: *limits
+    environment:
+      <<: *db-env
+      INVENTORY_URL: http://inventory-${INVENTORY_IMPL:-go}:8080
+      PAYMENT_FAIL_RATE: ${PAYMENT_FAIL_RATE:-0}
+    ports: ["8085:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      oracle: { condition: service_healthy }

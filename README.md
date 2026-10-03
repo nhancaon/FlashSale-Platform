@@ -9,7 +9,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 0 | Khung repo, Compose, migration | Xong, đã chạy thật |
 | 1 | Rate limiter (Go + Java) | Xong: test pass, `-race` sạch; benchmark sơ bộ chưa đáng tin (xem `loadtest/results/phase1-ratelimiter/README.md`) |
 | 2 | Inventory (Go + Java) | Xong: cùng contract test pass cho 3 chiến lược x 2 ngôn ngữ, 0 oversell; bảng so sánh ở `loadtest/results/phase2-inventory/README.md` |
-| 3 | Order service | Chưa làm |
+| 3 | Order service (saga, idempotency, outbox, Resilience4j) | Xong: 19 test, `make e2e` và `make chaos` qua với cả inventory-go và inventory-java |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -74,3 +74,20 @@ API: `GET /v1/inventory/{sku}`, `POST /v1/inventory/{reserve|release|confirm}` (
 Env: `STOCK_STRATEGY` (`atomic` | `pessimistic` | `optimistic`), `DB_*`, `DB_POOL_MAX`, `REDIS_ADDR` (Go) / `REDIS_HOST`+`REDIS_PORT` (Java), `CACHE_ENABLED`, `CACHE_TTL_MS`.
 
 Test: `make test` (unit), `make contract-test` (cùng một bộ test chạy vào cả hai service x 3 chiến lược, gồm test 2000 người mua tranh 100 hàng). Thiết kế: `docs/adr/0003-*.md`, `0004-*.md`.
+
+## Order (Phase 3)
+
+```bash
+make up && make db-migrate
+make up-apps INVENTORY_IMPL=go        # hoặc java: build + chạy order và inventory trong Docker
+make e2e                              # tạo đơn, replay, hết hàng + bù trừ, outbox
+make chaos                            # tắt inventory: breaker mở, order vẫn nhanh, tự hồi phục
+
+curl -X POST localhost:8085/v1/orders -H 'Content-Type: application/json' \
+  -H 'X-User-Id: u1' -H 'Idempotency-Key: abc-123' \
+  -d '{"items":[{"sku":"SKU-IPHONE","qty":1}]}'
+```
+
+`POST /v1/orders` (header `Idempotency-Key` và `X-User-Id` bắt buộc): 201 đơn mới, 200 replay, 202 saga chưa xong (PENDING),
+409 `OUT_OF_STOCK` / `PAYMENT_DECLINED` / `IDEMPOTENCY_KEY_REUSED` / `REQUEST_IN_PROGRESS`, 503 `INVENTORY_UNAVAILABLE`.
+`GET /v1/orders/{id}`. Thiết kế: `docs/adr/0005-*.md`. Ghi chú: Order ghi `outbox_events` cùng transaction; Phase 4 sẽ đọc bảng này.
