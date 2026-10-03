@@ -15,7 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/limiter"
+	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
 )
 
 const (
@@ -77,7 +77,9 @@ func (s *Server) Handler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(requestID, s.accessLog)
 	r.Post("/v1/check", s.check)
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, map[string]string{"status": "ok"}) })
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	})
 	r.Get("/readyz", s.readyz)
 	r.Handle("/metrics", promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))
 	return r

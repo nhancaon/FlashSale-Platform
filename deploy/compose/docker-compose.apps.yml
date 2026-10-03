@@ -108,6 +108,34 @@ services:
       oracle: { condition: service_healthy }
       kafka: { condition: service_healthy }
 
+  # Public entry point: login, JWT, rate limit, circuit breaker, proxy to order / inventory.
+  gateway:
+    build:
+      context: ../../services # the gateway imports the limiter library of ratelimiter-go
+      dockerfile: gateway/Dockerfile
+    image: flashsale/gateway
+    <<: *limits
+    environment:
+      JWT_SECRET: "${JWT_SECRET:?run make env-sync to add JWT_SECRET to .env}"
+      DEMO_PASSWORD: "${DEMO_PASSWORD:?run make env-sync to add DEMO_PASSWORD to .env}"
+      ORDER_URL: http://order:8080
+      INVENTORY_URL: http://inventory-${INVENTORY_IMPL:-go}:8080
+      RATELIMIT_MODE: ${RATELIMIT_MODE:-embedded}
+      RATELIMIT_ALGORITHM: ${RATELIMIT_ALGORITHM:-token_bucket}
+      RATELIMITER_URL: http://ratelimiter-go:8080
+      REDIS_ADDR: redis:6379
+      RL_USER_LIMIT: ${RL_USER_LIMIT:-20}
+      RL_IP_LIMIT: ${RL_IP_LIMIT:-100}
+    ports: ["8088:8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 3s
+    depends_on:
+      redis: { condition: service_healthy }
+
   order:
     build: ../../services/order
     image: flashsale/order

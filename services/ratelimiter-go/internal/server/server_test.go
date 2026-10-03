@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/limiter"
 	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/server"
+	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
 )
 
 type stubLimiter struct {

@@ -13,8 +13,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/limiter"
 	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/server"
+	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
 )
 
 type redisPinger struct{ c *redis.Client }

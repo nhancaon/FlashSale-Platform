@@ -23,6 +23,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 - `make contract-test`: contract test inventory (go + java x 3 chiến lược); cần `make up` + `make db-migrate`
 - `make up-apps INVENTORY_IMPL=go|java`: build + chạy order/inventory trong Docker (cổng 8085/8083/8084); `make e2e`, `make chaos`
 - `make e2e-outbox`: 3 outbox worker, giết 1 giữa chừng (cần make up-apps). `make test-go` cần make up + db-migrate (outbox-worker/notification test với Oracle + Kafka thật); `make test-go-race` chạy trong mạng compose
+- `make e2e-gateway`: login, tạo đơn qua gateway, 401/405/429. `make env-sync` thêm biến mới của .env.example vào .env. Tests Go dừng tạm các container outbox-worker (chúng tranh claim event của test)
 
 ## Ghi chú môi trường
 - Windows: Makefile dùng `bash` (Git Bash). Script `.sh` phải giữ kết thúc dòng LF.
@@ -35,6 +36,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 - Phase 2 (inventory Go + Java): xong. Cổng Go 8083, Java 8084. Strategy atomic|pessimistic|optimistic, reservation idempotent theo (orderId, sku), cache-aside Redis (ADR 0003/0004). Contract test: `contract-tests/` (Go, qua BASE_URL). inventory-java trên host Windows từ chối burst kết nối mới (Go không bị) -> client test giữ pool 64 kết nối; kiểm tra lại trong container Linux ở Phase 6.
 - Phase 3 (order, Java): xong. Cổng 8085. Saga reserve->payment(giả lập)->confirm, payment là điểm pivot, PENDING được resume khi client retry cùng Idempotency-Key (ADR 0005). Migration V3 thêm failure_reason/updated_at. TIMESTAMP đọc bằng LocalDateTime (UTC), KHÔNG dùng java.sql.Timestamp. Metric Prometheus không được kết thúc bằng _created. Dockerfile cho mọi service (non-root), compose: deploy/compose/docker-compose.apps.yml.
 - Phase 4 (outbox-worker + notification, Go): xong. Claim bằng SELECT ... FOR UPDATE SKIP LOCKED, đọc đúng N dòng với PREFETCH_ROWS=N (Oracle khoá theo từng fetch; FETCH FIRST + FOR UPDATE bị ORA-02014; ROWNUM làm worker đói) — ADR 0006. At-least-once, consumer idempotent theo event id (ADR 0007). Migration V4. Cổng notification 8087.
+- Phase 5 (gateway, Go): xong. Cổng 8088. Chuỗi IP-limit -> JWT -> user-limit -> breaker -> proxy; limiter dùng thư viện ratelimiter-go/pkg/limiter (go.mod replace, Docker context = services/) hoặc service remote; fail-open mặc định (ADR 0008). JWT chỉ HS256, X-User-Id do gateway đặt từ token.
 - Redis host port là 6380 (`REDIS_HOST_PORT`) vì máy dev có container `redis` khác giữ 6379.
 - Git Bash: script gọi `docker exec ... sqlplus /nolog` phải `export MSYS_NO_PATHCONV=1`.
 

@@ -11,6 +11,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 2 | Inventory (Go + Java) | Xong: cùng contract test pass cho 3 chiến lược x 2 ngôn ngữ, 0 oversell; bảng so sánh ở `loadtest/results/phase2-inventory/README.md` |
 | 3 | Order service (saga, idempotency, outbox, Resilience4j) | Xong: 19 test, `make e2e` và `make chaos` qua với cả inventory-go và inventory-java |
 | 4 | Outbox worker + Notification (Go) | Xong: 3 worker, giết 1 giữa chừng không mất event, mỗi event 1 thông báo (`make e2e-outbox`) |
+| 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -104,3 +105,20 @@ Order ghi `outbox_events` cùng transaction; các worker tranh nhau bằng `FOR 
 (key = aggregate id nên mỗi đơn nằm trong 1 partition, giữ thứ tự). Notification là consumer idempotent theo event id (bảng `processed_events`).
 Env chính: `OUTBOX_WORKERS`, `OUTBOX_BATCH_SIZE`, `OUTBOX_MAX_ATTEMPTS`, `KAFKA_BROKERS`, `KAFKA_TOPIC`. Metrics: `outbox_pending_events` (độ trễ relay), `outbox_published_total`.
 Thiết kế và các phát hiện về Oracle (ORA-02014, ROWNUM làm worker "đói"): `docs/adr/0006-*.md`, `0007-*.md`.
+
+## Gateway (Phase 5)
+
+```bash
+make up-apps INVENTORY_IMPL=go        # gateway nghe ở cổng 8088 (cần JWT_SECRET, DEMO_PASSWORD: make env-sync tự thêm vào .env)
+make e2e-gateway
+
+TOKEN=$(curl -s -X POST localhost:8088/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"alice","password":"<DEMO_PASSWORD trong .env>"}' | jq -r .accessToken)
+curl -X POST localhost:8088/api/orders -H "Authorization: Bearer $TOKEN" -H 'Idempotency-Key: k-1' \
+  -H 'Content-Type: application/json' -d '{"items":[{"sku":"SKU-IPHONE","qty":1}]}'
+```
+
+Chuỗi: request id → log/metrics → rate limit IP → JWT → rate limit user → circuit breaker → reverse proxy. Route công khai: `POST /auth/login`,
+`/api/orders[/{id}]` (GET, POST), `GET /api/inventory/{sku}` (reserve/release/confirm là nội bộ). `GET /readyz` tổng hợp sức khoẻ order, inventory, Redis.
+Env: `RATELIMIT_MODE` (`embedded` dùng thư viện ratelimiter-go, `remote` gọi service ratelimiter), `RL_USER_LIMIT`, `RL_IP_LIMIT`, `RATELIMIT_FAIL_OPEN`, `TRUST_PROXY`.
+Thiết kế: `docs/adr/0008-*.md`.

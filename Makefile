@@ -2,22 +2,25 @@ SHELL := bash
 COMPOSE := docker compose --env-file .env -f deploy/compose/docker-compose.yml
 GO_IMAGE ?= golang:1.26
 # Tests of the Go services that need Oracle / Kafka read these (values come from .env, nothing is hard coded).
-LOAD_ENV = set -a; . ./.env; set +a; export DB_PASSWORD=$$APP_USER_PASSWORD KAFKA_BROKERS=localhost:29092;
+LOAD_ENV = set -a; . ./.env; set +a; export DB_PASSWORD=$$APP_USER_PASSWORD KAFKA_BROKERS=localhost:29092 TEST_REDIS_ADDR=localhost:$${REDIS_HOST_PORT:-6380};
 # Run a command inside a Linux Go container (race detector needs cgo + gcc, absent on Windows). The container joins
 # the compose network, so it reaches the infrastructure of `make up` by service name (oracle, redis, kafka).
 # MSYS_NO_PATHCONV stops Git Bash rewriting /src; do not set it globally (it breaks mvnw).
 GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$(CURDIR):/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gobuild:/root/.cache/go-build -e TEST_REDIS_ADDR=redis:6379 -e DB_HOST=oracle -e DB_PASSWORD -e KAFKA_BROKERS=kafka:9092
 
-GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification
+GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
 
 .env:
 	cp .env.example .env
+
+env-sync: ## Thêm vào .env các biến mới của .env.example (không đổi giá trị cũ)
+	@bash scripts/sync-env.sh
 
 up: .env ## Chạy hạ tầng (Oracle, Redis, Kafka, Prometheus, Grafana) và chờ healthy
 	$(COMPOSE) up -d --wait
@@ -44,18 +47,22 @@ db-reset: .env ## XOÁ toàn bộ dữ liệu Oracle rồi dựng lại và migr
 
 test: check-lua test-go test-java ## Chạy toàn bộ test (cần Docker cho Testcontainers)
 
+# The outbox-worker integration tests seed events and expect only their own workers to claim them. Running
+# outbox-worker containers (make up-apps) would steal those rows, so they are stopped for the test run and restarted after.
+PAUSE_OUTBOX = ids=$$(docker ps -q --filter "name=flashsale-outbox-worker"); if [ -n "$$ids" ]; then echo "pausing outbox-worker containers during the tests"; docker stop $$ids > /dev/null; trap 'docker start $$ids > /dev/null' EXIT; fi;
+
 test-go: .env ## go test cho mọi service Go (cần make up + make db-migrate cho outbox-worker, notification)
-	@$(LOAD_ENV) for s in $(GO_SERVICES); do echo "== $$s"; (cd services/$$s && go vet ./... && go test -count=1 ./...) || exit 1; done
+	@$(LOAD_ENV) $(PAUSE_OUTBOX) for s in $(GO_SERVICES); do echo "== $$s"; (cd services/$$s && go vet ./... && go test -count=1 ./...) || exit 1; done
 
 test-go-race: .env ## go test -race trong container Linux (cần make up + make db-migrate)
-	@$(LOAD_ENV) for s in $(GO_SERVICES); do echo "== $$s (race)"; $(GO_DOCKER) -w /src/services/$$s $(GO_IMAGE) sh -c 'go vet ./... && go test -race -count=1 ./...' || exit 1; done
+	@$(LOAD_ENV) $(PAUSE_OUTBOX) for s in $(GO_SERVICES); do echo "== $$s (race)"; $(GO_DOCKER) -w /src/services/$$s $(GO_IMAGE) sh -c 'go vet ./... && go test -race -count=1 ./...' || exit 1; done
 
 test-java: ## ./mvnw test cho mọi service Java
 	@for s in $(JAVA_SERVICES); do echo "== $$s"; (cd services/$$s && ./mvnw -B -q test) || exit 1; done
 
 check-lua: ## Script Lua của rate limiter phải giống nhau giữa Go và Java
 	@for f in fixed_window sliding_window token_bucket; do \
-	  diff -q services/ratelimiter-go/internal/limiter/scripts/$$f.lua services/ratelimiter-java/src/main/resources/scripts/$$f.lua || exit 1; \
+	  diff -q services/ratelimiter-go/pkg/limiter/scripts/$$f.lua services/ratelimiter-java/src/main/resources/scripts/$$f.lua || exit 1; \
 	done; echo "lua scripts identical"
 
 contract-test: ## Contract test cho inventory-go và inventory-java x 3 chiến lược (cần make up + db-migrate)
@@ -66,17 +73,20 @@ INVENTORY_IMPL ?= go
 OUTBOX_REPLICAS ?= 3
 COMPOSE_APPS = $(COMPOSE) -f deploy/compose/docker-compose.apps.yml
 
-up-apps: .env ## Build và chạy order, inventory, outbox-worker (x OUTBOX_REPLICAS), notification
-	INVENTORY_IMPL=$(INVENTORY_IMPL) $(COMPOSE_APPS) --profile inventory-$(INVENTORY_IMPL) up -d --build --wait --scale outbox-worker=$(OUTBOX_REPLICAS) order inventory-$(INVENTORY_IMPL) outbox-worker notification
+up-apps: env-sync ## Build và chạy order, inventory, outbox-worker (x OUTBOX_REPLICAS), notification
+	INVENTORY_IMPL=$(INVENTORY_IMPL) $(COMPOSE_APPS) --profile inventory-$(INVENTORY_IMPL) up -d --build --wait --scale outbox-worker=$(OUTBOX_REPLICAS) order inventory-$(INVENTORY_IMPL) outbox-worker notification gateway
 
 down-apps: .env ## Dừng các service ứng dụng
-	$(COMPOSE_APPS) --profile inventory-go --profile inventory-java --profile ratelimiter-go --profile ratelimiter-java stop order inventory-go inventory-java ratelimiter-go ratelimiter-java outbox-worker notification
+	$(COMPOSE_APPS) --profile inventory-go --profile inventory-java --profile ratelimiter-go --profile ratelimiter-java stop order inventory-go inventory-java ratelimiter-go ratelimiter-java outbox-worker notification gateway
 
 e2e: ## End-to-end: tạo đơn qua order -> inventory -> Oracle -> outbox (cần make up-apps)
 	bash scripts/e2e-order.sh
 
 e2e-outbox: ## 3 outbox worker, giết 1 giữa chừng: không mất event, mỗi event 1 thông báo (cần make up-apps)
 	bash scripts/e2e-outbox.sh
+
+e2e-gateway: ## Qua gateway: login, tạo đơn, 401/405/429 (cần make up-apps)
+	bash scripts/e2e-gateway.sh
 
 chaos: ## Chaos test: tắt inventory, breaker mở, tự hồi phục (cần make up-apps)
 	bash scripts/chaos-order.sh

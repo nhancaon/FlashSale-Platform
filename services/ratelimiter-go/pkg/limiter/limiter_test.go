@@ -16,7 +16,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	tcredis "github.com/testcontainers/testcontainers-go/modules/redis"
 
-	"github.com/nhancaon/flashsale/services/ratelimiter-go/internal/limiter"
+	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
 )
 
 var rdb *redis.Client
