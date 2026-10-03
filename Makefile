@@ -1,16 +1,17 @@
 SHELL := bash
 COMPOSE := docker compose --env-file .env -f deploy/compose/docker-compose.yml
-# Redis published by `make up` (host port from .env, default 6380) as seen from a container.
-TEST_REDIS_ADDR ?= host.docker.internal:6380
 GO_IMAGE ?= golang:1.26
-# Run a command inside a Linux Go container (race detector needs cgo + gcc, absent on Windows).
+# Tests of the Go services that need Oracle / Kafka read these (values come from .env, nothing is hard coded).
+LOAD_ENV = set -a; . ./.env; set +a; export DB_PASSWORD=$$APP_USER_PASSWORD KAFKA_BROKERS=localhost:29092;
+# Run a command inside a Linux Go container (race detector needs cgo + gcc, absent on Windows). The container joins
+# the compose network, so it reaches the infrastructure of `make up` by service name (oracle, redis, kafka).
 # MSYS_NO_PATHCONV stops Git Bash rewriting /src; do not set it globally (it breaks mvnw).
-GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm -v "$(CURDIR):/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gobuild:/root/.cache/go-build -e TEST_REDIS_ADDR=$(TEST_REDIS_ADDR)
+GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$(CURDIR):/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gobuild:/root/.cache/go-build -e TEST_REDIS_ADDR=redis:6379 -e DB_HOST=oracle -e DB_PASSWORD -e KAFKA_BROKERS=kafka:9092
 
-GO_SERVICES := ratelimiter-go inventory-go
+GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: up-apps down-apps e2e chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -43,11 +44,11 @@ db-reset: .env ## XOÁ toàn bộ dữ liệu Oracle rồi dựng lại và migr
 
 test: check-lua test-go test-java ## Chạy toàn bộ test (cần Docker cho Testcontainers)
 
-test-go: ## go test cho mọi service Go (Testcontainers Redis)
-	@for s in $(GO_SERVICES); do echo "== $$s"; (cd services/$$s && go vet ./... && go test -count=1 ./...) || exit 1; done
+test-go: .env ## go test cho mọi service Go (cần make up + make db-migrate cho outbox-worker, notification)
+	@$(LOAD_ENV) for s in $(GO_SERVICES); do echo "== $$s"; (cd services/$$s && go vet ./... && go test -count=1 ./...) || exit 1; done
 
-test-go-race: .env ## go test -race trong container Linux (cần `make up` để có Redis)
-	@for s in $(GO_SERVICES); do echo "== $$s (race)"; $(GO_DOCKER) -w /src/services/$$s $(GO_IMAGE) sh -c 'go vet ./... && go test -race -count=1 ./...' || exit 1; done
+test-go-race: .env ## go test -race trong container Linux (cần make up + make db-migrate)
+	@$(LOAD_ENV) for s in $(GO_SERVICES); do echo "== $$s (race)"; $(GO_DOCKER) -w /src/services/$$s $(GO_IMAGE) sh -c 'go vet ./... && go test -race -count=1 ./...' || exit 1; done
 
 test-java: ## ./mvnw test cho mọi service Java
 	@for s in $(JAVA_SERVICES); do echo "== $$s"; (cd services/$$s && ./mvnw -B -q test) || exit 1; done
@@ -62,16 +63,20 @@ contract-test: ## Contract test cho inventory-go và inventory-java x 3 chiến 
 
 # ---- application stack (needs make up + make db-migrate first) ----
 INVENTORY_IMPL ?= go
+OUTBOX_REPLICAS ?= 3
 COMPOSE_APPS = $(COMPOSE) -f deploy/compose/docker-compose.apps.yml
 
-up-apps: .env ## Build và chạy order + inventory (INVENTORY_IMPL=go|java)
-	INVENTORY_IMPL=$(INVENTORY_IMPL) $(COMPOSE_APPS) --profile inventory-$(INVENTORY_IMPL) up -d --build --wait order inventory-$(INVENTORY_IMPL)
+up-apps: .env ## Build và chạy order, inventory, outbox-worker (x OUTBOX_REPLICAS), notification
+	INVENTORY_IMPL=$(INVENTORY_IMPL) $(COMPOSE_APPS) --profile inventory-$(INVENTORY_IMPL) up -d --build --wait --scale outbox-worker=$(OUTBOX_REPLICAS) order inventory-$(INVENTORY_IMPL) outbox-worker notification
 
 down-apps: .env ## Dừng các service ứng dụng
-	$(COMPOSE_APPS) --profile inventory-go --profile inventory-java --profile ratelimiter-go --profile ratelimiter-java stop order inventory-go inventory-java ratelimiter-go ratelimiter-java
+	$(COMPOSE_APPS) --profile inventory-go --profile inventory-java --profile ratelimiter-go --profile ratelimiter-java stop order inventory-go inventory-java ratelimiter-go ratelimiter-java outbox-worker notification
 
 e2e: ## End-to-end: tạo đơn qua order -> inventory -> Oracle -> outbox (cần make up-apps)
 	bash scripts/e2e-order.sh
+
+e2e-outbox: ## 3 outbox worker, giết 1 giữa chừng: không mất event, mỗi event 1 thông báo (cần make up-apps)
+	bash scripts/e2e-outbox.sh
 
 chaos: ## Chaos test: tắt inventory, breaker mở, tự hồi phục (cần make up-apps)
 	bash scripts/chaos-order.sh

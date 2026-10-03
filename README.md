@@ -10,6 +10,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 1 | Rate limiter (Go + Java) | Xong: test pass, `-race` sạch; benchmark sơ bộ chưa đáng tin (xem `loadtest/results/phase1-ratelimiter/README.md`) |
 | 2 | Inventory (Go + Java) | Xong: cùng contract test pass cho 3 chiến lược x 2 ngôn ngữ, 0 oversell; bảng so sánh ở `loadtest/results/phase2-inventory/README.md` |
 | 3 | Order service (saga, idempotency, outbox, Resilience4j) | Xong: 19 test, `make e2e` và `make chaos` qua với cả inventory-go và inventory-java |
+| 4 | Outbox worker + Notification (Go) | Xong: 3 worker, giết 1 giữa chừng không mất event, mỗi event 1 thông báo (`make e2e-outbox`) |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -91,3 +92,15 @@ curl -X POST localhost:8085/v1/orders -H 'Content-Type: application/json' \
 `POST /v1/orders` (header `Idempotency-Key` và `X-User-Id` bắt buộc): 201 đơn mới, 200 replay, 202 saga chưa xong (PENDING),
 409 `OUT_OF_STOCK` / `PAYMENT_DECLINED` / `IDEMPOTENCY_KEY_REUSED` / `REQUEST_IN_PROGRESS`, 503 `INVENTORY_UNAVAILABLE`.
 `GET /v1/orders/{id}`. Thiết kế: `docs/adr/0005-*.md`. Ghi chú: Order ghi `outbox_events` cùng transaction; Phase 4 sẽ đọc bảng này.
+
+## Outbox worker + Notification (Phase 4)
+
+```bash
+make up-apps INVENTORY_IMPL=go   # chạy thêm 3 outbox-worker (OUTBOX_REPLICAS) và notification
+make e2e-outbox                  # 150 đơn, 3 worker, giết 1 worker bằng SIGKILL: không mất event, 1 thông báo / đơn
+```
+
+Order ghi `outbox_events` cùng transaction; các worker tranh nhau bằng `FOR UPDATE SKIP LOCKED`, gửi lên Kafka topic `flashsale.order-events`
+(key = aggregate id nên mỗi đơn nằm trong 1 partition, giữ thứ tự). Notification là consumer idempotent theo event id (bảng `processed_events`).
+Env chính: `OUTBOX_WORKERS`, `OUTBOX_BATCH_SIZE`, `OUTBOX_MAX_ATTEMPTS`, `KAFKA_BROKERS`, `KAFKA_TOPIC`. Metrics: `outbox_pending_events` (độ trễ relay), `outbox_published_total`.
+Thiết kế và các phát hiện về Oracle (ORA-02014, ROWNUM làm worker "đói"): `docs/adr/0006-*.md`, `0007-*.md`.

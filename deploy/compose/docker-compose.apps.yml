@@ -81,6 +81,33 @@ services:
       oracle: { condition: service_healthy }
       redis: { condition: service_healthy }
 
+  # Competing consumers of the outbox table: scale with `--scale outbox-worker=3` (see make up-apps OUTBOX_REPLICAS).
+  outbox-worker:
+    build: ../../services/outbox-worker
+    image: flashsale/outbox-worker
+    <<: *limits
+    environment:
+      <<: *db-env
+      KAFKA_BROKERS: kafka:9092
+      OUTBOX_WORKERS: ${OUTBOX_WORKERS:-2}
+    healthcheck: *healthcheck
+    depends_on:
+      oracle: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+
+  notification:
+    build: ../../services/notification
+    image: flashsale/notification
+    <<: *limits
+    environment:
+      <<: *db-env
+      KAFKA_BROKERS: kafka:9092
+    ports: ["8087:8080"]
+    healthcheck: *healthcheck
+    depends_on:
+      oracle: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+
   order:
     build: ../../services/order
     image: flashsale/order
