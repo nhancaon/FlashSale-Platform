@@ -20,6 +20,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 - `make db-migrate`: áp dụng `db/migrations` (idempotent); `make db-reset` xoá sạch rồi dựng lại
 - `make db-shell`: sqlplus vào Oracle
 - `make test`: check-lua + test Go + test Java (Testcontainers, cần Docker); `make test-go-race`: -race trong container Linux (cần `make up`)
+- `make contract-test`: contract test inventory (go + java x 3 chiến lược); cần `make up` + `make db-migrate`
 
 ## Ghi chú môi trường
 - Windows: Makefile dùng `bash` (Git Bash). Script `.sh` phải giữ kết thúc dòng LF.
@@ -29,6 +30,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 ## Tiến độ
 - Phase 0 (khung repo): xong. `make up`, `make db-migrate` (idempotent), `make db-shell` đã chạy thật.
 - Phase 1 (rate limiter Go + Java): xong. Cổng Go 8081, Java 8082. Go 1.26, JDK 25 (Temurin, `JAVA_HOME` đã đặt), Spring Boot 4.1.1 (ADR 0001). Chưa có benchmark đáng tin; làm ở Phase 6 trong container.
+- Phase 2 (inventory Go + Java): xong. Cổng Go 8083, Java 8084. Strategy atomic|pessimistic|optimistic, reservation idempotent theo (orderId, sku), cache-aside Redis (ADR 0003/0004). Contract test: `contract-tests/` (Go, qua BASE_URL). inventory-java trên host Windows từ chối burst kết nối mới (Go không bị) -> client test giữ pool 64 kết nối; kiểm tra lại trong container Linux ở Phase 6.
 - Redis host port là 6380 (`REDIS_HOST_PORT`) vì máy dev có container `redis` khác giữ 6379.
 - Git Bash: script gọi `docker exec ... sqlplus /nolog` phải `export MSYS_NO_PATHCONV=1`.
 

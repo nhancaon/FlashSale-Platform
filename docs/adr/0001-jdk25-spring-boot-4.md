@@ -16,8 +16,9 @@ Spring Framework 7, Jackson 3, Tomcat 11).
 - Verified in Phase 1 on this stack: Spring Data Redis (Lettuce), Micrometer/Prometheus, structured
   JSON logging, Testcontainers 2.x. Boot 4 moved packages and test support (e.g. `@LocalServerPort`
   is in `org.springframework.boot.test.web.server`; Jackson 3 lives in `tools.jackson`).
-- NOT yet verified: Resilience4j and the Oracle driver (`ojdbc11`) on Boot 4 / JDK 25. Checked at
-  the start of Phases 2 and 3; if one does not work, fall back to JDK 21 / Boot 3.5 for that service
-  only and record it here.
+- Verified in Phase 2: Oracle JDBC (`ojdbc17`, the driver Initializr picks for JDK 25; the spec said
+  `ojdbc11`), HikariCP, Spring JDBC `JdbcClient` and Spring Data Redis work on this stack against Oracle Free.
+- NOT yet verified: Resilience4j on Boot 4 / JDK 25. Checked at the start of Phase 3; if it does not work,
+  fall back to JDK 21 / Boot 3.5 for the order service only and record it here.
 - Virtual-thread pinning on `synchronized` was largely fixed in JDK 24, so the pinning experiment in
   the concurrency lab must be measured, not assumed (see spec appendix A).

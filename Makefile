@@ -7,10 +7,10 @@ GO_IMAGE ?= golang:1.26
 # MSYS_NO_PATHCONV stops Git Bash rewriting /src; do not set it globally (it breaks mvnw).
 GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm -v "$(CURDIR):/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gobuild:/root/.cache/go-build -e TEST_REDIS_ADDR=$(TEST_REDIS_ADDR)
 
-GO_SERVICES := ratelimiter-go
-JAVA_SERVICES := ratelimiter-java
+GO_SERVICES := ratelimiter-go inventory-go
+JAVA_SERVICES := ratelimiter-java inventory-java
 
-.PHONY: help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua
+.PHONY: help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -56,3 +56,6 @@ check-lua: ## Script Lua của rate limiter phải giống nhau giữa Go và Ja
 	@for f in fixed_window sliding_window token_bucket; do \
 	  diff -q services/ratelimiter-go/internal/limiter/scripts/$$f.lua services/ratelimiter-java/src/main/resources/scripts/$$f.lua || exit 1; \
 	done; echo "lua scripts identical"
+
+contract-test: ## Contract test cho inventory-go và inventory-java x 3 chiến lược (cần make up + db-migrate)
+	bash contract-tests/run.sh

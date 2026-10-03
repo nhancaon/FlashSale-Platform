@@ -24,7 +24,10 @@ rejected. Script: `loadtest/ratelimiter-check.js`, driver: `loadtest/run-ratelim
 - The `sliding_window` Java run had no stalled user and reached 6412 req/s, the same code
   path with the same Redis, so the stalls come from the connection path, not the algorithm.
 - Raising `server.tomcat.accept-count` to 1024 did **not** remove the stalls.
-- Suspect: container-to-host connection handling on Docker Desktop for Windows. Not proven.
+- Likely cause (seen again in Phase 2): the Java service on this Windows host refuses bursts of new connections.
+  A native client opening hundreds to 2000 connections at once got "connection refused" from inventory-java, and k6
+  in Docker sees the same as `dial: i/o timeout`. The Go services did not stall. Probably the listen backlog that
+  Tomcat/JVM gets on Windows, even with accept-count=1024. Not isolated; capping client connections removed it.
 
 ## What Phase 6 must do differently
 

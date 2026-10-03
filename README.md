@@ -8,7 +8,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 |---|---|---|
 | 0 | Khung repo, Compose, migration | Xong, đã chạy thật |
 | 1 | Rate limiter (Go + Java) | Xong: test pass, `-race` sạch; benchmark sơ bộ chưa đáng tin (xem `loadtest/results/phase1-ratelimiter/README.md`) |
-| 2 | Inventory (Go + Java) | Chưa làm |
+| 2 | Inventory (Go + Java) | Xong: cùng contract test pass cho 3 chiến lược x 2 ngôn ngữ, 0 oversell; bảng so sánh ở `loadtest/results/phase2-inventory/README.md` |
 | 3 | Order service | Chưa làm |
 
 ## Yêu cầu
@@ -57,3 +57,20 @@ curl -X POST localhost:8081/v1/check -H 'Content-Type: application/json' \
 Cấu hình bằng env: `RATELIMIT_ALGORITHM` (`token_bucket` | `sliding_window` | `fixed_window`), `REDIS_ADDR` (Go) hoặc `REDIS_HOST`/`REDIS_PORT` (Java), `PORT`, `CHECK_TIMEOUT_MS`. Metrics ở `/metrics`: `ratelimit_allowed_total`, `ratelimit_rejected_total`, `ratelimit_check_duration_seconds`.
 
 Test: `make test` (Testcontainers), `make test-go-race` (cần `make up`; chạy `-race` trong container Linux vì Windows không có gcc).
+
+## Inventory (Phase 2)
+
+```bash
+make up && make db-migrate
+export DB_PASSWORD=dev_app_password     # mật khẩu trong .env (APP_USER_PASSWORD)
+cd services/inventory-go   && STOCK_STRATEGY=atomic go run ./cmd/inventory       # cổng 8083
+cd services/inventory-java && STOCK_STRATEGY=atomic ./mvnw spring-boot:run       # cổng 8084
+
+curl -X POST localhost:8083/v1/inventory/reserve -H 'Content-Type: application/json' \
+  -d '{"orderId":"o-1","sku":"SKU-IPHONE","qty":2}'
+```
+
+API: `GET /v1/inventory/{sku}`, `POST /v1/inventory/{reserve|release|confirm}` (idempotent), `/healthz`, `/readyz`, `/metrics`.
+Env: `STOCK_STRATEGY` (`atomic` | `pessimistic` | `optimistic`), `DB_*`, `DB_POOL_MAX`, `REDIS_ADDR` (Go) / `REDIS_HOST`+`REDIS_PORT` (Java), `CACHE_ENABLED`, `CACHE_TTL_MS`.
+
+Test: `make test` (unit), `make contract-test` (cùng một bộ test chạy vào cả hai service x 3 chiến lược, gồm test 2000 người mua tranh 100 hàng). Thiết kế: `docs/adr/0003-*.md`, `0004-*.md`.
