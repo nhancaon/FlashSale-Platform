@@ -7,7 +7,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | Phase | Nội dung | Trạng thái |
 |---|---|---|
 | 0 | Khung repo, Compose, migration | Xong, đã chạy thật |
-| 1 | Rate limiter (Go + Java) | Chưa làm |
+| 1 | Rate limiter (Go + Java) | Xong: test pass, `-race` sạch; benchmark sơ bộ chưa đáng tin (xem `loadtest/results/phase1-ratelimiter/README.md`) |
 | 2 | Inventory (Go + Java) | Chưa làm |
 | 3 | Order service | Chưa làm |
 
@@ -41,3 +41,19 @@ deploy/compose/ deploy/k8s/ ansible/ labs/concurrency-lab/ docs/
 ```
 
 Sơ đồ kiến trúc: xem mục 2 của spec; sẽ vẽ lại trong `docs/architecture.md` khi có service đầu tiên.
+
+## Rate limiter (Phase 1)
+
+```bash
+# Go (cổng 8081) và Java (cổng 8082), cùng contract
+cd services/ratelimiter-go   && REDIS_ADDR=localhost:6380 go run ./cmd/ratelimiter
+cd services/ratelimiter-java && ./mvnw spring-boot:run
+
+curl -X POST localhost:8081/v1/check -H 'Content-Type: application/json' \
+  -d '{"key":"user:42","limit":5,"windowSec":60}'
+# {"allowed":true,"remaining":4,"retryAfterMs":0}
+```
+
+Cấu hình bằng env: `RATELIMIT_ALGORITHM` (`token_bucket` | `sliding_window` | `fixed_window`), `REDIS_ADDR` (Go) hoặc `REDIS_HOST`/`REDIS_PORT` (Java), `PORT`, `CHECK_TIMEOUT_MS`. Metrics ở `/metrics`: `ratelimit_allowed_total`, `ratelimit_rejected_total`, `ratelimit_check_duration_seconds`.
+
+Test: `make test` (Testcontainers), `make test-go-race` (cần `make up`; chạy `-race` trong container Linux vì Windows không có gcc).

@@ -3,3 +3,4 @@
 Makefile text eol=lf
 *.sql text eol=lf
 *.yml text eol=lf
+*.lua text eol=lf
