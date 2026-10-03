@@ -1,0 +1,28 @@
+# Secrets
+.env
+*.vault-pass
+ansible/**/vault-pass*
+
+# Build output
+target/
+bin/
+dist/
+*.exe
+*.test
+*.out
+
+# Dependencies
+node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Benchmark: chỉ giữ kết quả đã tổng hợp, bỏ dữ liệu thô lớn
+loadtest/results/raw/
