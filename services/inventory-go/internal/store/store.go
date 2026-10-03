@@ -8,6 +8,10 @@ import (
 	"fmt"
 
 	"github.com/sijms/go-ora/v2/network"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/apperr"
 )
@@ -106,7 +110,15 @@ func (o *Oracle) FindReservation(ctx context.Context, orderID string, productID 
 }
 
 // InTx runs fn in a READ COMMITTED transaction (Oracle's default): commit on nil, rollback on error.
-func (o *Oracle) InTx(ctx context.Context, fn func(Tx) error) error {
+func (o *Oracle) InTx(ctx context.Context, fn func(Tx) error) (err error) {
+	// One span per database transaction: in a trace this is where time goes when a request waits for a lock.
+	ctx, span := otel.Tracer("inventory-go").Start(ctx, "oracle.tx", trace.WithAttributes(attribute.String("db.system", "oracle")))
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+	}()
 	tx, err := o.db.BeginTx(ctx, nil)
 	if err != nil {
 		return mapErr(err)

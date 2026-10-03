@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -90,3 +90,9 @@ e2e-gateway: ## Qua gateway: login, tạo đơn, 401/405/429 (cần make up-apps
 
 chaos: ## Chaos test: tắt inventory, breaker mở, tự hồi phục (cần make up-apps)
 	bash scripts/chaos-order.sh
+
+trace-check: ## Gửi 1 đơn qua gateway và kiểm tra Jaeger có 1 trace gateway -> order -> inventory (cần make up-apps)
+	bash scripts/check-tracing.sh
+
+dashboard: ## Sinh lại Grafana dashboard JSON và kiểm tra từng query với Prometheus
+	node scripts/gen-dashboard.mjs && node scripts/check-dashboard.mjs

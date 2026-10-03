@@ -12,6 +12,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 3 | Order service (saga, idempotency, outbox, Resilience4j) | Xong: 19 test, `make e2e` và `make chaos` qua với cả inventory-go và inventory-java |
 | 4 | Outbox worker + Notification (Go) | Xong: 3 worker, giết 1 giữa chừng không mất event, mỗi event 1 thông báo (`make e2e-outbox`) |
 | 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
+| 6a | Observability: metrics, Grafana dashboard, tracing (Jaeger) | Xong: dashboard provisioned, 1 trace xuyên gateway-order-inventory (`make trace-check`) |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -122,3 +123,14 @@ Chuỗi: request id → log/metrics → rate limit IP → JWT → rate limit use
 `/api/orders[/{id}]` (GET, POST), `GET /api/inventory/{sku}` (reserve/release/confirm là nội bộ). `GET /readyz` tổng hợp sức khoẻ order, inventory, Redis.
 Env: `RATELIMIT_MODE` (`embedded` dùng thư viện ratelimiter-go, `remote` gọi service ratelimiter), `RL_USER_LIMIT`, `RL_IP_LIMIT`, `RATELIMIT_FAIL_OPEN`, `TRUST_PROXY`.
 Thiết kế: `docs/adr/0008-*.md`.
+
+## Observability (Phase 6a)
+
+| Công cụ | Địa chỉ |
+|---|---|
+| Grafana (dashboard **FlashSale overview**, tự nạp) | http://localhost:3000 (admin / mật khẩu trong `.env`) |
+| Prometheus | http://localhost:9090 |
+| Jaeger (trace) | http://localhost:16686 |
+
+`make trace-check` gửi một đơn qua gateway rồi kiểm tra có đúng một trace đi qua gateway → order → inventory → Oracle. `make dashboard` sinh lại
+dashboard JSON và chạy thử mọi query. Thiết kế và giới hạn: `docs/adr/0009-observability.md`.

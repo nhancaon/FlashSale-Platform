@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
@@ -54,6 +55,8 @@ func New(cfg Config) *Server {
 	}
 	algo := prometheus.Labels{"algorithm": cfg.Limiter.Name()}
 	reg := prometheus.NewRegistry()
+	// Go runtime (goroutines, GC, heap) and process (CPU, memory, fds) metrics for the dashboards.
+	reg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	s := &Server{
 		cfg:      cfg,
 		registry: reg,

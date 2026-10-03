@@ -14,13 +14,16 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/nhancaon/flashsale/services/gateway/internal/app"
 	"github.com/nhancaon/flashsale/services/gateway/internal/auth"
 	"github.com/nhancaon/flashsale/services/gateway/internal/health"
 	"github.com/nhancaon/flashsale/services/gateway/internal/proxy"
 	"github.com/nhancaon/flashsale/services/gateway/internal/ratelimit"
+	"github.com/nhancaon/flashsale/services/gateway/internal/telemetry"
 	"github.com/nhancaon/flashsale/services/ratelimiter-go/pkg/limiter"
 )
 
@@ -77,8 +80,20 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("RATELIMIT_MODE must be embedded or remote, got %q", mode)
 	}
 
+	shutdownTracing, err := telemetry.Setup(context.Background(), "gateway")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = shutdownTracing(c)
+	}()
+
 	timeout := time.Duration(envInt("UPSTREAM_TIMEOUT_MS", 8000)) * time.Millisecond
 	reg := prometheus.NewRegistry()
+	// Go runtime (goroutines, GC, heap) and process (CPU, memory, fds) metrics for the dashboards.
+	reg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	handler := app.New(app.Config{
 		Issuer:      issuer,
 		Credentials: auth.NewCredentials(demoPassword),
@@ -104,7 +119,7 @@ func run(logger *slog.Logger) error {
 
 	srv := &http.Server{
 		Addr:              ":" + env("PORT", "8088"),
-		Handler:           handler,
+		Handler:           otelhttp.NewHandler(handler, "gateway", otelhttp.WithSpanNameFormatter(telemetry.SpanName), otelhttp.WithFilter(telemetry.Filter)),
 		ReadHeaderTimeout: 2 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      timeout + 5*time.Second,

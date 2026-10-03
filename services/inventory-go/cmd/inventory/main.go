@@ -15,14 +15,17 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/redis/go-redis/v9"
 	_ "github.com/sijms/go-ora/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/cache"
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/server"
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/service"
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/store"
 	"github.com/nhancaon/flashsale/services/inventory-go/internal/strategy"
+	"github.com/nhancaon/flashsale/services/inventory-go/internal/telemetry"
 )
 
 type dbPinger struct{ db *sql.DB }
@@ -55,12 +58,24 @@ func run(logger *slog.Logger) error {
 	db.SetMaxIdleConns(envInt("DB_POOL_MIN_IDLE", 5))
 	db.SetConnMaxLifetime(30 * time.Minute)
 
+	shutdownTracing, err := telemetry.Setup(context.Background(), "inventory-go")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = shutdownTracing(c)
+	}()
+
 	strat, err := strategy.New(env("STOCK_STRATEGY", strategy.Atomic), envInt("OPTIMISTIC_MAX_RETRIES", 50))
 	if err != nil {
 		return err
 	}
 
 	reg := prometheus.NewRegistry()
+	// Go runtime (goroutines, GC, heap) and process (CPU, memory, fds) metrics for the dashboards.
+	reg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	registerDBPoolMetrics(reg, db)
 
 	var c cache.Cache = cache.Noop{}
@@ -91,7 +106,7 @@ func run(logger *slog.Logger) error {
 	})
 	httpSrv := &http.Server{
 		Addr:              ":" + env("PORT", "8083"),
-		Handler:           srv.Handler(),
+		Handler:           otelhttp.NewHandler(srv.Handler(), "inventory-go", otelhttp.WithSpanNameFormatter(telemetry.SpanName), otelhttp.WithFilter(telemetry.Filter)),
 		ReadHeaderTimeout: 2 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,

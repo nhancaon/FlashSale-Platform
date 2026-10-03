@@ -1,8 +1,32 @@
 global:
-  scrape_interval: 15s
+  scrape_interval: 5s
+  evaluation_interval: 15s
 
-# Các service ứng dụng sẽ được thêm job ở các phase sau.
+# Every application service exposes /metrics on port 8080 inside the compose network. Services that are not running
+# (for example the inventory implementation that was not selected) simply show up=0.
 scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ["localhost:9090"]
+
+  - job_name: gateway
+    static_configs: [{ targets: ["gateway:8080"] }]
+  - job_name: order
+    static_configs: [{ targets: ["order:8080"] }]
+  - job_name: inventory-go
+    static_configs: [{ targets: ["inventory-go:8080"] }]
+  - job_name: inventory-java
+    static_configs: [{ targets: ["inventory-java:8080"] }]
+  - job_name: ratelimiter-go
+    static_configs: [{ targets: ["ratelimiter-go:8080"] }]
+  - job_name: ratelimiter-java
+    static_configs: [{ targets: ["ratelimiter-java:8080"] }]
+  - job_name: notification
+    static_configs: [{ targets: ["notification:8080"] }]
+
+  # Scaled with --scale: the service name resolves to every replica.
+  - job_name: outbox-worker
+    dns_sd_configs:
+      - names: ["outbox-worker"]
+        type: A
+        port: 8080

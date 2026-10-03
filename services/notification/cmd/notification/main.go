@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/segmentio/kafka-go"
 	_ "github.com/sijms/go-ora/v2"
@@ -60,6 +61,8 @@ func run(logger *slog.Logger) error {
 	defer reader.Close()
 
 	reg := prometheus.NewRegistry()
+	// Go runtime (goroutines, GC, heap) and process (CPU, memory, fds) metrics for the dashboards.
+	reg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	processed := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "notification_processed_total", Help: "Messages handled by result."}, []string{"result"})
 	reg.MustRegister(processed)
 	for _, r := range []notify.Result{notify.Sent, notify.Skipped, notify.Duplicate, notify.Poison} {

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/sijms/go-ora/v2"
 
@@ -74,6 +75,8 @@ func run(logger *slog.Logger) error {
 	defer kafkaPub.Close()
 
 	reg := prometheus.NewRegistry()
+	// Go runtime (goroutines, GC, heap) and process (CPU, memory, fds) metrics for the dashboards.
+	reg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	m := promMetrics{
 		published: prometheus.NewCounter(prometheus.CounterOpts{Name: "outbox_published_total", Help: "Events delivered to Kafka."}),
 		failed:    prometheus.NewCounter(prometheus.CounterOpts{Name: "outbox_failed_attempts_total", Help: "Failed delivery attempts."}),

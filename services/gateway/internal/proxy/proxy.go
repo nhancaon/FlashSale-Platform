@@ -15,6 +15,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/nhancaon/flashsale/services/gateway/internal/middleware"
 )
@@ -113,7 +114,8 @@ func Handler(u Upstream, log *slog.Logger, state *prometheus.GaugeVec) http.Hand
 			pr.Out.Header.Set("X-User-Id", info.User)
 			pr.Out.Header.Set(middleware.HeaderRequestID, info.RequestID)
 		},
-		Transport: &breakerTransport{base: transport, cb: cb},
+		// otelhttp makes a client span per upstream call and injects the traceparent header.
+		Transport: &breakerTransport{base: otelhttp.NewTransport(transport), cb: cb},
 		// ReverseProxy adds upstream headers on top of what the gateway already wrote. Upstreams echo the request id
 		// too, so drop theirs: the response keeps exactly one X-Request-Id (set by the gateway).
 		ModifyResponse: func(resp *http.Response) error {

@@ -14,6 +14,20 @@ x-db-env: &db-env
   DB_PASSWORD: ${APP_USER_PASSWORD}
   DB_POOL_MAX: ${DB_POOL_MAX:-20}
 
+# Tracing: Go services export OTLP themselves; Java services get the OpenTelemetry agent through JAVA_TOOL_OPTIONS.
+# Benchmarks switch it off with OTEL_ENDPOINT= and JAVA_TRACING_OPTS= (both empty); sampling via OTEL_TRACES_SAMPLER_ARG.
+x-otel: &otel
+  OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_ENDPOINT-http://jaeger:4318}"
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+  OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-1.0}
+
+x-otel-java: &otel-java
+  <<: *otel
+  JAVA_TOOL_OPTIONS: "${JAVA_TRACING_OPTS--javaagent:/otel/agent.jar}"
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+
 x-healthcheck: &healthcheck
   test: ["CMD-SHELL", "wget -qO- http://localhost:8080/readyz > /dev/null || exit 1"]
   interval: 5s
@@ -55,7 +69,8 @@ services:
     image: flashsale/inventory-go
     <<: *limits
     environment:
-      <<: *db-env
+      <<: [*db-env, *otel]
+      OTEL_SERVICE_NAME: inventory-go
       REDIS_ADDR: redis:6379
       STOCK_STRATEGY: ${STOCK_STRATEGY:-atomic}
     ports: ["8083:8080"]
@@ -70,7 +85,8 @@ services:
     image: flashsale/inventory-java
     <<: *limits
     environment:
-      <<: *db-env
+      <<: [*db-env, *otel-java]
+      OTEL_SERVICE_NAME: inventory-java
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       STOCK_STRATEGY: ${STOCK_STRATEGY:-atomic}
@@ -116,6 +132,8 @@ services:
     image: flashsale/gateway
     <<: *limits
     environment:
+      <<: *otel
+      OTEL_SERVICE_NAME: gateway
       JWT_SECRET: "${JWT_SECRET:?run make env-sync to add JWT_SECRET to .env}"
       DEMO_PASSWORD: "${DEMO_PASSWORD:?run make env-sync to add DEMO_PASSWORD to .env}"
       ORDER_URL: http://order:8080
@@ -141,7 +159,8 @@ services:
     image: flashsale/order
     <<: *limits
     environment:
-      <<: *db-env
+      <<: [*db-env, *otel-java]
+      OTEL_SERVICE_NAME: order
       INVENTORY_URL: http://inventory-${INVENTORY_IMPL:-go}:8080
       PAYMENT_FAIL_RATE: ${PAYMENT_FAIL_RATE:-0}
     ports: ["8085:8080"]
