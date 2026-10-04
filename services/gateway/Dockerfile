@@ -13,7 +13,7 @@ COPY gateway/ gateway/
 WORKDIR /src/gateway
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app ./cmd/gateway
 
-FROM alpine:3.22
+FROM alpine:3.24
 # Non-root user; busybox wget is used by the container healthcheck.
 RUN adduser -D -u 10001 app
 COPY --from=build /out/app /app
