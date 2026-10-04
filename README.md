@@ -13,6 +13,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 4 | Outbox worker + Notification (Go) | Xong: 3 worker, giết 1 giữa chừng không mất event, mỗi event 1 thông báo (`make e2e-outbox`) |
 | 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
 | 6a | Observability: metrics, Grafana dashboard, tracing (Jaeger) | Xong: dashboard provisioned, 1 trace xuyên gateway-order-inventory (`make trace-check`) |
+| 6b | Load test + benchmark Go vs Java | Xong: 6 lượt x 600 VU, reconcile PASS cả 6; tìm và sửa 3 lỗi thật. Báo cáo: [docs/benchmark-report.md](docs/benchmark-report.md) |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -43,7 +44,7 @@ api/ db/migrations/ services/ contract-tests/ loadtest/
 deploy/compose/ deploy/k8s/ ansible/ labs/concurrency-lab/ docs/
 ```
 
-Sơ đồ kiến trúc: xem mục 2 của spec; sẽ vẽ lại trong `docs/architecture.md` khi có service đầu tiên.
+Sơ đồ kiến trúc, luồng một đơn hàng và các đảm bảo đúng đắn (kèm test chứng minh): [docs/architecture.md](docs/architecture.md).
 
 ## Rate limiter (Phase 1)
 
@@ -134,3 +135,19 @@ Thiết kế: `docs/adr/0008-*.md`.
 
 `make trace-check` gửi một đơn qua gateway rồi kiểm tra có đúng một trace đi qua gateway → order → inventory → Oracle. `make dashboard` sinh lại
 dashboard JSON và chạy thử mọi query. Thiết kế và giới hạn: `docs/adr/0009-observability.md`.
+
+## Load test và benchmark (Phase 6b)
+
+```bash
+make up && make db-migrate
+bash loadtest/run-benchmark.sh      # tự chạy make db-tune (redo log 3 x 512 MB); ~35 phút cho 3 vòng x go/java
+node loadtest/aggregate.mjs         # bảng summary.md + biểu đồ docs/img/benchmark.svg
+bash loadtest/reconcile.sh <sku> <stock>   # đối soát DB sau một lượt (tồn kho, đơn treo, key trùng, event, thông báo)
+```
+
+Kết quả (600 VU, cùng giới hạn 2 CPU / 1 GiB): throughput và latency **ngang nhau** (~265 đơn/s, p95 ~33 ms) vì nút
+cổ chai là order + Oracle, không phải inventory; khác biệt nằm ở tài nguyên: Go dùng bộ nhớ ít hơn ~10 lần, khởi động
+0,6 s so với 5,6 s, image 14 MiB so với 134 MiB. Chi tiết, phương pháp, giới hạn và 3 lỗi load test tìm ra:
+[docs/benchmark-report.md](docs/benchmark-report.md).
+
+![benchmark](docs/img/benchmark.svg)

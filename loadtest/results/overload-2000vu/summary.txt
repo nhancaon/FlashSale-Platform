@@ -1,0 +1,21 @@
+ Container flashsale-kafka Healthy 
+ Container flashsale-redis Healthy 
+ Container flashsale-gateway-1 Healthy 
+ Container flashsale-notification-1 Healthy 
+ Container flashsale-inventory-go-1 Healthy 
+ Container flashsale-order-1 Healthy 
+ Container flashsale-outbox-worker-2 Healthy 
+ Container flashsale-outbox-worker-3 Healthy 
+ Container flashsale-outbox-worker-1 Healthy 
+--- warm-up (go, round 1)
+--- measured run go-r1 (2000 VUs, ramp 20s, hold 40s)
+k6 exit code: 99 (non-zero means a threshold was crossed)
+waiting for the outbox to drain...
+reconcile FAIL: initial=100 available=0 reserved=0 confirmed_qty=100 | orders=24903 confirmed=100 failed=23841 pending=962 | duplicates=0 | events=48844 sent=48844 | notifications=15300
+  PROBLEM: 962 orders still PENDING
+  PROBLEM: 48844 outbox events for 24903 orders (expected 2 each)
+  PROBLEM: notifications: 15300 rows / 15041 distinct for 24903 finished orders
+RECONCILE FAILED for go-r1
+>>> switching the stack to inventory-java (cpus=2 mem=1g strategy=atomic)
+ Image flashsale/gateway Building 
+ Image flashsale/outbox-worker Building 

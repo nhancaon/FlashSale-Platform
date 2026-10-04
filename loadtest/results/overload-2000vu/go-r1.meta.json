@@ -1,0 +1,1 @@
+{"impl":"go","round":1,"vus":2000,"ramp":"20s","hold":"40s","stock":100,"k6Exit":99,"cpus":"2","mem":"1g","strategy":"atomic"}

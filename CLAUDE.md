@@ -17,7 +17,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 
 ## Lệnh
 - `make up` / `make down` / `make ps` / `make logs SERVICE=oracle`: hạ tầng Compose
-- `make db-migrate`: áp dụng `db/migrations` (idempotent); `make db-reset` xoá sạch rồi dựng lại
+- `make db-migrate`: áp dụng `db/migrations` (idempotent); `make db-reset` xoá sạch rồi dựng lại; `make db-tune` tăng redo log (cần trước load test)
 - `make db-shell`: sqlplus vào Oracle
 - `make test`: check-lua + test Go + test Java (Testcontainers, cần Docker); `make test-go-race`: -race trong container Linux (cần `make up`)
 - `make contract-test`: contract test inventory (go + java x 3 chiến lược); cần `make up` + `make db-migrate`
@@ -38,6 +38,7 @@ Hệ thống flash sale để so sánh Go vs Java (cùng API contract) trên Ora
 - Phase 4 (outbox-worker + notification, Go): xong. Claim bằng SELECT ... FOR UPDATE SKIP LOCKED, đọc đúng N dòng với PREFETCH_ROWS=N (Oracle khoá theo từng fetch; FETCH FIRST + FOR UPDATE bị ORA-02014; ROWNUM làm worker đói) — ADR 0006. At-least-once, consumer idempotent theo event id (ADR 0007). Migration V4. Cổng notification 8087.
 - Phase 5 (gateway, Go): xong. Cổng 8088. Chuỗi IP-limit -> JWT -> user-limit -> breaker -> proxy; limiter dùng thư viện ratelimiter-go/pkg/limiter (go.mod replace, Docker context = services/) hoặc service remote; fail-open mặc định (ADR 0008). JWT chỉ HS256, X-User-Id do gateway đặt từ token.
 - Phase 6a (observability): xong. Prometheus scrape mọi service (5s), Grafana dashboard sinh bởi scripts/gen-dashboard.mjs, Jaeger 16686, OTel Go (gateway, inventory-go) + OTel Java agent qua JAVA_TOOL_OPTIONS. Tắt tracing khi benchmark: OTEL_ENDPOINT= JAVA_TRACING_OPTS= (rỗng). ADR 0009. Dùng node script phải dùng fileURLToPath (đường dẫn có khoảng trắng).
+- Phase 6b (load test + benchmark): xong. `loadtest/run-benchmark.sh` (600 VU, 3 vòng x go/java, giới hạn 2 CPU/1 GiB) -> `node loadtest/aggregate.mjs`; `loadtest/reconcile.sh` đối soát DB sau mỗi lượt. Báo cáo `docs/benchmark-report.md`. Sửa 3 lỗi: breaker tính OUT_OF_STOCK là thành công + gateway không tính 503; job `PendingOrderRecovery` (migration V5); pool Go phải SetMaxIdleConns = MaxOpenConns (ORA-12516). `make db-tune`: redo log Oracle 3 x 512 MB (bản gốc 10 MB làm DB đứng). Không chạy test Java/Go cùng lúc với benchmark (chung Oracle).
 - Redis host port là 6380 (`REDIS_HOST_PORT`) vì máy dev có container `redis` khác giữ 6379.
 - Git Bash: script gọi `docker exec ... sqlplus /nolog` phải `export MSYS_NO_PATHCONV=1`.
 

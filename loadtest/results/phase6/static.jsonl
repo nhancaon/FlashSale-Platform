@@ -1,0 +1,2 @@
+{"impl":"go","imageBytes":14849269,"startupMs":[614,604,679,665,614],"idleMem":"6.246MiB"}
+{"impl":"java","imageBytes":140247053,"startupMs":[5920,5143,5735,5276,5633],"idleMem":"169.7MiB"}

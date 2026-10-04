@@ -1,0 +1,5 @@
+waiting for the outbox to drain...
+reconcile FAIL: initial=100 available=0 reserved=0 confirmed_qty=100 | orders=24903 confirmed=100 failed=23841 pending=962 | duplicates=0 | events=48844 sent=48844 | notifications=15300
+  PROBLEM: 962 orders still PENDING
+  PROBLEM: 48844 outbox events for 24903 orders (expected 2 each)
+  PROBLEM: notifications: 15300 rows / 15041 distinct for 24903 finished orders

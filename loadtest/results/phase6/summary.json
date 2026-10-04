@@ -1,0 +1,515 @@
+{
+  "generated": "2026-10-04T15:30:08.540Z",
+  "runs": [
+    {
+      "name": "go-r1",
+      "impl": "go",
+      "round": 1,
+      "meta": {
+        "impl": "go",
+        "round": 1,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16664,
+        "confirmed": 100,
+        "failed": 16564,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33328,
+        "eventsSent": 33328,
+        "notifications": 16664
+      },
+      "ordersPerSec": 264.32032195135764,
+      "p50": 19.748834,
+      "p95": 33.394630299999946,
+      "p99": 73.57574945999991,
+      "max": 435.817635,
+      "created": 100,
+      "replayed": 2459,
+      "soldOut": 16564,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 39.51714285714287,
+      "invCpuPeak": 62.02,
+      "invMemPeak": 16.64,
+      "orderCpuBusy": 81.69954545454547,
+      "oracleCpuBusy": 122.5978260869565
+    },
+    {
+      "name": "go-r2",
+      "impl": "go",
+      "round": 2,
+      "meta": {
+        "impl": "go",
+        "round": 2,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16679,
+        "confirmed": 100,
+        "failed": 16579,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33358,
+        "eventsSent": 33358,
+        "notifications": 16679
+      },
+      "ordersPerSec": 265.7824942706726,
+      "p50": 19.457137,
+      "p95": 31.129225299999998,
+      "p99": 42.047918719999984,
+      "max": 194.469873,
+      "created": 100,
+      "replayed": 2496,
+      "soldOut": 16579,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 36.943636363636365,
+      "invCpuPeak": 68.25,
+      "invMemPeak": 31.93,
+      "orderCpuBusy": 74.00636363636362,
+      "oracleCpuBusy": 118.18521739130433
+    },
+    {
+      "name": "go-r3",
+      "impl": "go",
+      "round": 3,
+      "meta": {
+        "impl": "go",
+        "round": 3,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16645,
+        "confirmed": 100,
+        "failed": 16545,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33290,
+        "eventsSent": 33290,
+        "notifications": 16645
+      },
+      "ordersPerSec": 266.3441473280733,
+      "p50": 20.366336,
+      "p95": 34.16236859999999,
+      "p99": 50.453813000000025,
+      "max": 211.700533,
+      "created": 100,
+      "replayed": 2604,
+      "soldOut": 16545,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 38.5952380952381,
+      "invCpuPeak": 54.41,
+      "invMemPeak": 25.57,
+      "orderCpuBusy": 77.62571428571427,
+      "oracleCpuBusy": 129.2908695652174
+    },
+    {
+      "name": "java-r1",
+      "impl": "java",
+      "round": 1,
+      "meta": {
+        "impl": "java",
+        "round": 1,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16684,
+        "confirmed": 100,
+        "failed": 16584,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33368,
+        "eventsSent": 33368,
+        "notifications": 16684
+      },
+      "ordersPerSec": 262.8052669441433,
+      "p50": 19.2612325,
+      "p95": 33.2736722,
+      "p99": 53.468136950000016,
+      "max": 273.034836,
+      "created": 100,
+      "replayed": 2454,
+      "soldOut": 16584,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 40.029999999999994,
+      "invCpuPeak": 61.3,
+      "invMemPeak": 305.3,
+      "orderCpuBusy": 85.88761904761904,
+      "oracleCpuBusy": 123.0382608695652
+    },
+    {
+      "name": "java-r2",
+      "impl": "java",
+      "round": 2,
+      "meta": {
+        "impl": "java",
+        "round": 2,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16705,
+        "confirmed": 100,
+        "failed": 16605,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33410,
+        "eventsSent": 33410,
+        "notifications": 16705
+      },
+      "ordersPerSec": 265.3739826370734,
+      "p50": 18.243934,
+      "p95": 32.325931399999995,
+      "p99": 59.12706807999999,
+      "max": 384.380958,
+      "created": 100,
+      "replayed": 2514,
+      "soldOut": 16605,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 37.93818181818181,
+      "invCpuPeak": 92.91,
+      "invMemPeak": 272.2,
+      "orderCpuBusy": 76.06363636363638,
+      "oracleCpuBusy": 104.36304347826086
+    },
+    {
+      "name": "java-r3",
+      "impl": "java",
+      "round": 3,
+      "meta": {
+        "impl": "java",
+        "round": 3,
+        "vus": 600,
+        "ramp": "20s",
+        "hold": "40s",
+        "stock": 100,
+        "k6Exit": 0,
+        "cpus": "2",
+        "mem": "1g",
+        "strategy": "atomic"
+      },
+      "reconcile": {
+        "status": "PASS",
+        "initial": 100,
+        "available": 0,
+        "reserved": 0,
+        "confirmedQty": 100,
+        "orders": 16801,
+        "confirmed": 100,
+        "failed": 16701,
+        "pending": 0,
+        "duplicates": 0,
+        "events": 33602,
+        "eventsSent": 33602,
+        "notifications": 16801
+      },
+      "ordersPerSec": 267.24518749339796,
+      "p50": 17.690408,
+      "p95": 28.090578,
+      "p99": 37.70533639999997,
+      "max": 298.875215,
+      "created": 100,
+      "replayed": 2540,
+      "soldOut": 16701,
+      "throttled": 0,
+      "unexpected": 0,
+      "k6Exit": 0,
+      "invCpuBusy": 31.936363636363637,
+      "invCpuPeak": 52.11,
+      "invMemPeak": 280.5,
+      "orderCpuBusy": 71.83954545454544,
+      "oracleCpuBusy": 106.9265217391304
+    }
+  ],
+  "staticFacts": [
+    {
+      "impl": "go",
+      "imageBytes": 14849269,
+      "startupMs": [
+        614,
+        604,
+        679,
+        665,
+        614
+      ],
+      "idleMem": "6.246MiB"
+    },
+    {
+      "impl": "java",
+      "imageBytes": 140247053,
+      "startupMs": [
+        5920,
+        5143,
+        5735,
+        5276,
+        5633
+      ],
+      "idleMem": "169.7MiB"
+    }
+  ],
+  "measures": {
+    "ordersPerSec": {
+      "go": {
+        "median": 265.7824942706726,
+        "min": 264.32032195135764,
+        "max": 266.3441473280733,
+        "values": [
+          264.32032195135764,
+          265.7824942706726,
+          266.3441473280733
+        ]
+      },
+      "java": {
+        "median": 265.3739826370734,
+        "min": 262.8052669441433,
+        "max": 267.24518749339796,
+        "values": [
+          262.8052669441433,
+          265.3739826370734,
+          267.24518749339796
+        ]
+      }
+    },
+    "p50": {
+      "go": {
+        "median": 19.748834,
+        "min": 19.457137,
+        "max": 20.366336,
+        "values": [
+          19.748834,
+          19.457137,
+          20.366336
+        ]
+      },
+      "java": {
+        "median": 18.243934,
+        "min": 17.690408,
+        "max": 19.2612325,
+        "values": [
+          19.2612325,
+          18.243934,
+          17.690408
+        ]
+      }
+    },
+    "p95": {
+      "go": {
+        "median": 33.394630299999946,
+        "min": 31.129225299999998,
+        "max": 34.16236859999999,
+        "values": [
+          33.394630299999946,
+          31.129225299999998,
+          34.16236859999999
+        ]
+      },
+      "java": {
+        "median": 32.325931399999995,
+        "min": 28.090578,
+        "max": 33.2736722,
+        "values": [
+          33.2736722,
+          32.325931399999995,
+          28.090578
+        ]
+      }
+    },
+    "p99": {
+      "go": {
+        "median": 50.453813000000025,
+        "min": 42.047918719999984,
+        "max": 73.57574945999991,
+        "values": [
+          73.57574945999991,
+          42.047918719999984,
+          50.453813000000025
+        ]
+      },
+      "java": {
+        "median": 53.468136950000016,
+        "min": 37.70533639999997,
+        "max": 59.12706807999999,
+        "values": [
+          53.468136950000016,
+          59.12706807999999,
+          37.70533639999997
+        ]
+      }
+    },
+    "invCpuBusy": {
+      "go": {
+        "median": 38.5952380952381,
+        "min": 36.943636363636365,
+        "max": 39.51714285714287,
+        "values": [
+          39.51714285714287,
+          36.943636363636365,
+          38.5952380952381
+        ]
+      },
+      "java": {
+        "median": 37.93818181818181,
+        "min": 31.936363636363637,
+        "max": 40.029999999999994,
+        "values": [
+          40.029999999999994,
+          37.93818181818181,
+          31.936363636363637
+        ]
+      }
+    },
+    "invMemPeak": {
+      "go": {
+        "median": 25.57,
+        "min": 16.64,
+        "max": 31.93,
+        "values": [
+          16.64,
+          31.93,
+          25.57
+        ]
+      },
+      "java": {
+        "median": 280.5,
+        "min": 272.2,
+        "max": 305.3,
+        "values": [
+          305.3,
+          272.2,
+          280.5
+        ]
+      }
+    },
+    "startupMs": {
+      "go": {
+        "median": 614,
+        "min": 604,
+        "max": 679,
+        "values": [
+          614,
+          604,
+          679,
+          665,
+          614
+        ]
+      },
+      "java": {
+        "median": 5633,
+        "min": 5143,
+        "max": 5920,
+        "values": [
+          5920,
+          5143,
+          5735,
+          5276,
+          5633
+        ]
+      }
+    },
+    "imageMiB": {
+      "go": {
+        "median": 14.16136646270752,
+        "min": 14.16136646270752,
+        "max": 14.16136646270752,
+        "values": [
+          14.16136646270752
+        ]
+      },
+      "java": {
+        "median": 133.7500123977661,
+        "min": 133.7500123977661,
+        "max": 133.7500123977661,
+        "values": [
+          133.7500123977661
+        ]
+      }
+    },
+    "idleMiB": {
+      "go": {
+        "median": 6.246,
+        "min": 6.246,
+        "max": 6.246,
+        "values": [
+          6.246
+        ]
+      },
+      "java": {
+        "median": 169.7,
+        "min": 169.7,
+        "max": 169.7,
+        "values": [
+          169.7
+        ]
+      }
+    }
+  }
+}

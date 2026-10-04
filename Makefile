@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -36,6 +36,9 @@ ps: .env ## Trạng thái container
 
 db-migrate: ## Áp dụng db/migrations lên Oracle (idempotent)
 	bash db/migrate.sh
+
+db-tune: ## Tăng redo log Oracle lên 3 x 512 MB (idempotent; cần trước load test)
+	bash db/tune-redo.sh
 
 db-shell: .env ## Mở sqlplus vào Oracle
 	@. ./.env && $(COMPOSE) exec oracle sqlplus $$APP_USER/$$APP_USER_PASSWORD@//localhost:1521/$${ORACLE_SERVICE:-FREEPDB1}
