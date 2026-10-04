@@ -53,7 +53,7 @@ jobs:
           f=loadtest/results/smoke/smoke.k6.json
           [ -f "$f" ] || exit 0
           jq -r '"| metric | value |\n|---|---:|\n| orders created | \(.metrics.orders_created.count // 0) |\n| sold out answers | \(.metrics.orders_sold_out.count // 0) |\n| unexpected answers | \(.metrics.orders_unexpected.count // 0) |\n| p95 POST /api/orders (ms) | \(.metrics["http_req_duration{name:POST /api/orders}"]["p(95)"] | floor) |"' "$f" >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: smoke-${{ matrix.inventory }}
