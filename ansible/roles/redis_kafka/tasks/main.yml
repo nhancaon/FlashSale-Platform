@@ -1,0 +1,52 @@
+---
+- name: Redis
+  community.docker.docker_container:
+    name: flashsale-redis
+    image: "{{ redis_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# Kafka KRaft, one node. Clients in k3s bootstrap through the `kafka` Service, then talk to the advertised address,
+# which therefore is the data node's IP (pods cannot resolve container names of this host).
+- name: Kafka
+  community.docker.docker_container:
+    name: flashsale-kafka
+    image: "{{ kafka_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["9092:9092"]
+    volumes: ["kafka-data:/var/lib/kafka/data"]
+    env:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://{{ data_ip }}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 20s
+
+- name: Wait until Redis and Kafka are healthy
+  ansible.builtin.command: docker inspect --format {{ '{{.State.Health.Status}}' }} {{ item }}
+  loop: [flashsale-redis, flashsale-kafka]
+  register: redis_kafka_health
+  until: redis_kafka_health.stdout == 'healthy'
+  retries: 30
+  delay: 5
+  changed_when: false
+  check_mode: false

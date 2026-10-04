@@ -1,0 +1,52 @@
+---
+# Node maintenance without downtime, one node at a time (serial: 1):
+#   drain (pods move to the other node) -> OS updates + k3s at k3s_version -> wait Ready -> uncordon -> apps healthy
+#   ansible-playbook rolling-update.yml [-e k3s_version=v1.x.y+k3s1]
+# The gateway keeps answering during the whole run (make lab-rolling checks it with a request every second).
+
+- name: Rolling update of the k3s nodes
+  hosts: k3s
+  become: true
+  serial: 1
+  max_fail_percentage: 0 # stop at the first broken node instead of breaking the next one
+  tasks:
+    - name: Cordon and drain {{ inventory_hostname }}
+      ansible.builtin.command: >-
+        k3s kubectl drain {{ inventory_hostname }} --ignore-daemonsets --delete-emptydir-data --timeout=180s
+      delegate_to: "{{ groups['k3s_server'][0] }}"
+      changed_when: true
+
+    - name: Security updates
+      ansible.builtin.apt:
+        upgrade: safe
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: K3s at the wanted version (no-op when already there)
+      ansible.builtin.include_role:
+        name: k3s
+
+    - name: Restart k3s
+      ansible.builtin.systemd_service:
+        name: "{{ 'k3s' if inventory_hostname in groups['k3s_server'] else 'k3s-agent' }}"
+        state: restarted
+
+    - name: Node is Ready again
+      ansible.builtin.command: k3s kubectl wait --for=condition=Ready node/{{ inventory_hostname }} --timeout=10s
+      delegate_to: "{{ groups['k3s_server'][0] }}"
+      register: rolling_ready
+      until: rolling_ready.rc == 0
+      retries: 30
+      delay: 5
+      changed_when: false
+
+    - name: Uncordon {{ inventory_hostname }}
+      ansible.builtin.command: k3s kubectl uncordon {{ inventory_hostname }}
+      delegate_to: "{{ groups['k3s_server'][0] }}"
+      changed_when: true
+
+    - name: Every Deployment is fully available before the next node
+      ansible.builtin.command: >-
+        k3s kubectl -n {{ app_namespace }} wait --for=condition=Available deployment --all --timeout=180s
+      delegate_to: "{{ groups['k3s_server'][0] }}"
+      changed_when: false

@@ -1,45 +1,69 @@
 name: ansible
 
-# ansible-lint + a dry run (--check) of the playbooks. The playbooks arrive in Phase 8; until then the job is skipped.
+# ansible-lint, then the whole lab of deploy/lab on the runner: site.yml on three fresh "VM" containers,
+# an order through the gateway on k3s, and a second site.yml run that must change nothing (idempotency).
 on:
   push:
     branches: [main]
-    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+    paths: ["ansible/**", "deploy/lab/**", "deploy/k8s/**", "scripts/lab.sh", ".github/workflows/ansible.yml"]
   pull_request:
-    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+    paths: ["ansible/**", "deploy/lab/**", "deploy/k8s/**", "scripts/lab.sh", ".github/workflows/ansible.yml"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint-and-check:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Any playbook yet?
-        id: present
-        run: |
-          if ls ansible/*.yml > /dev/null 2>&1; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "no playbook yet (Phase 8)"; fi
       - uses: actions/setup-python@v6
-        if: steps.present.outputs.yes == 'true'
         with:
           python-version: "3.13"
-      - name: Install ansible + ansible-lint
-        if: steps.present.outputs.yes == 'true'
-        run: |
-          pip install ansible-core ansible-lint
-          if [ -f ansible/requirements.yml ]; then ansible-galaxy collection install -r ansible/requirements.yml; fi
-      - name: ansible-lint
-        if: steps.present.outputs.yes == 'true'
+      - name: ansible-lint (production profile)
         working-directory: ansible
-        run: ansible-lint
-      - name: Dry run against the CI inventory
-        if: steps.present.outputs.yes == 'true' && hashFiles('ansible/inventory/ci.yml') != ''
-        working-directory: ansible
+        env:
+          FLASHSALE_VAULT_PASSWORD: dev-only-vault-password # the lab vault; a real one comes from a secret
         run: |
-          for p in *.yml; do
-            [ "$p" = requirements.yml ] && continue
-            ansible-playbook -i inventory/ci.yml --syntax-check "$p"
-            ansible-playbook -i inventory/ci.yml --check "$p"
-          done
+          pip install "ansible-core>=2.19,<2.20" ansible-lint
+          ansible-galaxy collection install -r requirements.yml
+          ansible-lint
+          ansible-playbook --syntax-check site.yml rolling-update.yml
+
+  lab:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lab nodes and controller
+        run: |
+          cp .env.example .env
+          bash scripts/lab.sh up
+      - name: Service images (tag = commit)
+        run: bash scripts/lab.sh images
+      - name: site.yml
+        run: bash scripts/lab.sh ansible site.yml
+      - name: An order through the gateway on k3s
+        run: |
+          pw=$(docker exec -w /repo/ansible lab-controller ansible-vault view group_vars/all/vault.yml | sed -n 's/^vault_demo_password: "\(.*\)"/\1/p')
+          token=$(curl -sf -X POST localhost:18088/auth/login -H 'Content-Type: application/json' \
+            -d "{\"username\":\"alice\",\"password\":\"$pw\"}" | jq -r .accessToken)
+          curl -sf -X POST localhost:18088/api/orders -H "Authorization: Bearer $token" -H "Idempotency-Key: ci-$GITHUB_RUN_ID" \
+            -H 'Content-Type: application/json' -d '{"items":[{"sku":"SKU-HEADSET","qty":1}]}' | tee order.json
+          jq -e '.status == "CONFIRMED"' order.json
+      - name: Second run changes nothing
+        run: |
+          bash scripts/lab.sh ansible site.yml | tee second-run.log
+          sed 's/\x1b\[[0-9;]*m//g' second-run.log | grep -E '^lab-' | tee recap.txt
+          ! grep -vE 'changed=0 ' recap.txt
+      - name: Cluster state on failure
+        if: failure()
+        run: |
+          docker exec lab-k3s-server k3s kubectl get nodes,pods -A -o wide || true
+          docker exec lab-k3s-server k3s kubectl -n flashsale get events --sort-by=.lastTimestamp | tail -40 || true

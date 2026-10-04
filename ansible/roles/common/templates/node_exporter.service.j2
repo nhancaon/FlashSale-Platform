@@ -1,0 +1,13 @@
+# Managed by Ansible (role common)
+[Unit]
+Description=Prometheus node_exporter
+After=network-online.target
+
+[Service]
+User=node_exporter
+ExecStart=/usr/local/bin/node_exporter --web.listen-address=:9100
+Restart=on-failure
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

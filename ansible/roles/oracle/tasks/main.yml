@@ -1,0 +1,56 @@
+---
+- name: Oracle Free container
+  community.docker.docker_container:
+    name: flashsale-oracle
+    image: "{{ oracle_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["1521:1521"]
+    volumes: ["oracle-data:/opt/oracle/oradata"]
+    env:
+      ORACLE_PASSWORD: "{{ oracle_password }}"
+      APP_USER: "{{ app_db_user }}"
+      APP_USER_PASSWORD: "{{ app_db_password }}"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+  no_log: true # the env holds passwords
+
+- name: Wait until Oracle is healthy (first start creates the database, a few minutes)
+  ansible.builtin.command: docker inspect --format {{ '{{.State.Health.Status}}' }} flashsale-oracle
+  register: oracle_health
+  until: oracle_health.stdout == 'healthy'
+  retries: 60
+  delay: 10
+  changed_when: false
+  check_mode: false
+
+# Migrations: the same files and the same script as on a developer machine (db/migrate.sh, idempotent).
+- name: Migration files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../{{ item }}"
+    dest: "{{ app_dir }}/{{ item | dirname }}/"
+    mode: preserve
+  loop: [db/migrations, db/migrate.sh, db/tune-redo.sh, scripts/lib.sh]
+
+- name: Environment file for the database scripts (secrets, root only)
+  ansible.builtin.template:
+    src: db.env.j2
+    dest: "{{ app_dir }}/.env"
+    mode: "0600"
+
+- name: Redo logs 3 x 512 MB (the image ships 2 x 10 MB, which stalls Oracle under load)
+  ansible.builtin.command: bash db/tune-redo.sh
+  args:
+    chdir: "{{ app_dir }}"
+  register: oracle_tune
+  changed_when: "'already' not in oracle_tune.stdout"
+
+- name: Apply migrations
+  ansible.builtin.command: bash db/migrate.sh
+  args:
+    chdir: "{{ app_dir }}"
+  register: oracle_migrate
+  changed_when: "'done: 0 migration' not in oracle_migrate.stdout"

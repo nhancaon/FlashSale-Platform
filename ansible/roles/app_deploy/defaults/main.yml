@@ -1,0 +1,9 @@
+---
+app_deploy_images: [gateway, order, "inventory-{{ inventory_impl }}", outbox-worker, notification]
+app_deploy_deployments: [inventory, order, outbox-worker, notification, gateway]
+app_deploy_replicas:
+  gateway: 2
+  inventory: 2
+  order: 2
+  outbox_worker: 2
+  notification: 2 # two consumers of one group: a drain never stops notifications

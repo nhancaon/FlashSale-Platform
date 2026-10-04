@@ -1,0 +1,39 @@
+---
+# ---- accounts and network ----
+bootstrap_user: ubuntu-lab # account of a fresh server (cloud images: ubuntu); only the first play uses it
+deploy_user: deploy
+deploy_pubkey_file: /root/.ssh-lab-rw/id_ed25519.pub
+trusted_cidrs: [172.30.0.0/24] # the nodes talk to each other freely; everything else is denied except SSH
+k3s_pod_cidr: 10.42.0.0/16
+k3s_service_cidr: 10.43.0.0/16
+data_ip: "{{ hostvars[groups['data'][0]].ansible_host }}"
+k3s_server_ip: "{{ hostvars[groups['k3s_server'][0]].ansible_host }}"
+
+# ---- versions (pinned: a rerun installs the same thing) ----
+k3s_version: v1.36.5+k3s1 # stable channel at the time of writing
+node_exporter_version: 1.12.1
+oracle_image: gvenzl/oracle-free:slim
+redis_image: redis:7-alpine
+kafka_image: apache/kafka:3.8.0
+prometheus_image: prom/prometheus:v2.54.1
+grafana_image: grafana/grafana:11.2.0
+
+# ---- application ----
+app_dir: /opt/flashsale
+app_namespace: flashsale
+app_version: latest # make lab-deploy passes the git commit, so a new commit rolls the Deployments
+inventory_impl: go # go | java, the same choice as make up-apps INVENTORY_IMPL
+gateway_node_port: 30088
+inventory_node_port: 30083
+order_node_port: 30085
+notification_node_port: 30087
+oracle_service: FREEPDB1
+app_db_user: flashsale
+
+# ---- secrets: only names here, values in vault.yml (ansible-vault, password from FLASHSALE_VAULT_PASSWORD) ----
+oracle_password: "{{ vault_oracle_password }}"
+app_db_password: "{{ vault_app_db_password }}"
+jwt_secret: "{{ vault_jwt_secret }}"
+demo_password: "{{ vault_demo_password }}"
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+k3s_token: "{{ vault_k3s_token }}"

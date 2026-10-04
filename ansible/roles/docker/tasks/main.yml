@@ -1,0 +1,19 @@
+---
+# Docker from the Ubuntu archive (docker.io): one package, security updates through apt like the rest of the system.
+- name: Docker engine and the Python SDK used by community.docker
+  ansible.builtin.apt:
+    name: [docker.io, python3-docker]
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Docker running
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Deploy user may use Docker
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    groups: [docker]
+    append: true

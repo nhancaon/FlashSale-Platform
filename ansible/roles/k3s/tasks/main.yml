@@ -1,0 +1,107 @@
+---
+# k3s server on the k3s_server group, agents join it. Version pinned (k3s_version); the token comes from the vault.
+- name: Kernel settings for Kubernetes networking
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "1"
+    sysctl_set: true
+    reload: true
+  loop: [net.ipv4.ip_forward, net.bridge.bridge-nf-call-iptables]
+  failed_when: false # in the lab the bridge module belongs to the host kernel; k3s also sets what it needs
+
+- name: Installed k3s version
+  ansible.builtin.command: /usr/local/bin/k3s --version
+  register: k3s_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: K3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /usr/local/bin/k3s-install.sh
+    mode: "0755"
+
+- name: Install k3s server {{ k3s_version }}
+  ansible.builtin.command: /usr/local/bin/k3s-install.sh
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: >-
+      server --node-ip {{ ansible_host }} --advertise-address {{ ansible_host }}
+      --tls-san {{ ansible_host }} --disable traefik --write-kubeconfig-mode 0640
+    K3S_TOKEN: "{{ k3s_token }}"
+  when:
+    - inventory_hostname in groups['k3s_server']
+    - k3s_version not in (k3s_installed.stdout | default(''))
+  changed_when: true # guarded by the version check above
+  no_log: true
+
+- name: Wait for the API server
+  ansible.builtin.command: k3s kubectl get --raw /readyz
+  register: k3s_api
+  until: k3s_api.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: false
+  check_mode: false
+  when: inventory_hostname in groups['k3s_server']
+
+- name: Install k3s agent {{ k3s_version }}
+  ansible.builtin.command: /usr/local/bin/k3s-install.sh
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: agent --node-ip {{ ansible_host }}
+    K3S_URL: https://{{ k3s_server_ip }}:6443
+    K3S_TOKEN: "{{ k3s_token }}"
+  when:
+    - inventory_hostname in groups['k3s_agent']
+    - k3s_version not in (k3s_installed.stdout | default(''))
+  changed_when: true # guarded by the version check above
+  no_log: true
+
+- name: Deploy user may read the kubeconfig (kubectl without sudo)
+  ansible.builtin.file:
+    path: /etc/rancher/k3s/k3s.yaml
+    group: "{{ deploy_user }}"
+    mode: "0640"
+  when: inventory_hostname in groups['k3s_server']
+
+- name: Every node is Ready
+  ansible.builtin.command: k3s kubectl wait --for=condition=Ready node --all --timeout=10s
+  register: k3s_nodes
+  until: k3s_nodes.rc == 0 and (k3s_nodes.stdout_lines | length) == (groups['k3s'] | length)
+  retries: 30
+  delay: 5
+  changed_when: false
+  check_mode: false
+  when: inventory_hostname in groups['k3s_server']
+
+# Cluster DNS must survive a drain: one CoreDNS replica (the k3s default) means every service name fails to resolve
+# while its node is drained, and the whole platform stops answering (measured: ~18 s per node during rolling-update).
+- name: CoreDNS replicas
+  ansible.builtin.command: k3s kubectl -n kube-system get deployment coredns -o jsonpath={.spec.replicas}
+  register: k3s_coredns_replicas
+  changed_when: false
+  check_mode: false
+  when: inventory_hostname in groups['k3s_server']
+
+- name: Two CoreDNS replicas
+  ansible.builtin.command: k3s kubectl -n kube-system scale deployment coredns --replicas=2
+  changed_when: true
+  when:
+    - inventory_hostname in groups['k3s_server']
+    - k3s_coredns_replicas.stdout != '2'
+
+- name: CoreDNS disruption budget (drain waits for the other replica)
+  ansible.builtin.shell: |
+    set -o pipefail
+    pdb=$(k3s kubectl -n kube-system create poddisruptionbudget coredns --selector=k8s-app=kube-dns --min-available=1 \
+      --dry-run=client -o yaml)
+    # apply reports a PDB as "configured" every time: apply only when kubectl diff finds a difference (exit 1)
+    rc=0; echo "$pdb" | k3s kubectl diff -f - > /dev/null || rc=$?
+    if [ "$rc" = 1 ]; then echo "$pdb" | k3s kubectl apply -f - && echo APPLIED; elif [ "$rc" != 0 ]; then exit "$rc"; fi
+  args:
+    executable: /bin/bash
+  register: k3s_coredns_pdb
+  changed_when: "'APPLIED' in k3s_coredns_pdb.stdout"
+  when: inventory_hostname in groups['k3s_server']

@@ -1,0 +1,31 @@
+# Rendered by Ansible (role app_deploy). Oracle, Redis and Kafka run on the data node, outside Kubernetes:
+# a Service without selector + an EndpointSlice give them stable in-cluster names (oracle, redis, kafka).
+{% for svc in [{'name': 'oracle', 'port': 1521}, {'name': 'redis', 'port': 6379}, {'name': 'kafka', 'port': 9092}] %}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ svc.name }}
+  namespace: {{ app_namespace }}
+spec:
+  ports:
+    - name: main
+      port: {{ svc.port }}
+      targetPort: {{ svc.port }}
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: {{ svc.name }}-data-node
+  namespace: {{ app_namespace }}
+  labels:
+    kubernetes.io/service-name: {{ svc.name }}
+addressType: IPv4
+ports:
+  - name: main
+    port: {{ svc.port }}
+    protocol: TCP
+endpoints:
+  - addresses: ["{{ data_ip }}"]
+    conditions: { ready: true } # explicit: the API server defaults it, which made every apply report a change
+{% endfor %}

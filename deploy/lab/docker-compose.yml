@@ -1,0 +1,78 @@
+# Ansible lab: three "VMs" (privileged Ubuntu containers with systemd + SSH) and an Ansible controller.
+#   make lab-up      build + start, install the lab SSH key        make lab-site   run ansible/site.yml
+#   make lab-down    stop (keeps volumes)                          make lab-destroy also removes the volumes
+# Fixed IPs: CoreDNS inside k3s cannot use Docker's embedded DNS, so pods reach the data node by IP.
+name: flashsale-lab
+
+x-node: &node
+  build: ./node
+  image: flashsale/lab-node
+  privileged: true # k3s and Docker need cgroups, iptables and mounts; lab only
+  # own cgroup namespace per node: with "host" both kubelets managed the same kubepods tree and killed each other's pods
+  cgroup: private
+  tmpfs: [/run, /run/lock]
+  restart: unless-stopped
+
+services:
+  data:
+    <<: *node
+    container_name: lab-data
+    hostname: lab-data
+    networks: { lab: { ipv4_address: 172.30.0.10 } }
+    volumes:
+      - data-docker:/var/lib/docker # overlayfs cannot nest: Docker's data lives on real volumes
+      - data-containerd:/var/lib/containerd # (recent Docker keeps its images in containerd's snapshotter)
+    ports:
+      - "13000:3000" # Grafana
+      - "19090:9090" # Prometheus
+
+  k3s-server:
+    <<: *node
+    container_name: lab-k3s-server
+    hostname: lab-k3s-server
+    networks: { lab: { ipv4_address: 172.30.0.11 } }
+    volumes:
+      - server-k3s:/var/lib/rancher/k3s # same reason, for containerd
+      - server-etc-rancher:/etc/rancher # node password + config survive a re-created container, like /etc on a VM
+    ports:
+      - "18088:30088" # gateway NodePort
+
+  k3s-agent:
+    <<: *node
+    container_name: lab-k3s-agent
+    hostname: lab-k3s-agent
+    networks: { lab: { ipv4_address: 172.30.0.12 } }
+    volumes:
+      - agent-k3s:/var/lib/rancher/k3s
+      - agent-etc-rancher:/etc/rancher
+
+  controller:
+    build:
+      context: ../../ansible # for requirements.yml
+      dockerfile: ../deploy/lab/controller/Dockerfile
+    image: flashsale/lab-controller
+    container_name: lab-controller
+    hostname: lab-controller
+    networks: { lab: { ipv4_address: 172.30.0.5 } }
+    working_dir: /repo/ansible
+    environment:
+      ANSIBLE_CONFIG: /repo/ansible/ansible.cfg
+      FLASHSALE_VAULT_PASSWORD: ${FLASHSALE_VAULT_PASSWORD:?set FLASHSALE_VAULT_PASSWORD in .env (make env-sync)}
+    volumes:
+      - ../..:/repo
+      - ./.ssh:/root/.ssh-lab:ro
+    command: ["sleep", "infinity"]
+
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  data-docker:
+  data-containerd:
+  server-k3s:
+  agent-k3s:
+  server-etc-rancher:
+  agent-etc-rancher:

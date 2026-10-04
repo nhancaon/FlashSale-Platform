@@ -1,0 +1,100 @@
+# Rendered by Ansible (role app_deploy). One Deployment per service; images are imported on every node by Ansible.
+# Rolling updates replace one pod at a time and only after the new one passes /readyz (maxUnavailable: 0).
+{% set apps = [
+  {'name': 'inventory', 'image': 'inventory-' ~ inventory_impl, 'replicas': app_deploy_replicas.inventory, 'secrets': ['DB_PASSWORD'],
+   'mem': '768Mi' if inventory_impl == 'java' else '256Mi', 'cpu': '1', 'node_port': inventory_node_port},
+  {'name': 'order', 'image': 'order', 'replicas': app_deploy_replicas.order, 'secrets': ['DB_PASSWORD'],
+   'mem': '768Mi', 'cpu': '1', 'node_port': order_node_port},
+  {'name': 'outbox-worker', 'image': 'outbox-worker', 'replicas': app_deploy_replicas.outbox_worker, 'secrets': ['DB_PASSWORD'],
+   'mem': '128Mi', 'cpu': '500m', 'node_port': none},
+  {'name': 'notification', 'image': 'notification', 'replicas': app_deploy_replicas.notification, 'secrets': ['DB_PASSWORD'],
+   'mem': '128Mi', 'cpu': '500m', 'node_port': notification_node_port},
+  {'name': 'gateway', 'image': 'gateway', 'replicas': app_deploy_replicas.gateway, 'secrets': ['JWT_SECRET', 'DEMO_PASSWORD'],
+   'mem': '128Mi', 'cpu': '1', 'node_port': gateway_node_port},
+] %}
+{% for app in apps %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ app.name }}
+  namespace: {{ app_namespace }}
+  labels: { app: {{ app.name }} }
+spec:
+  replicas: {{ app.replicas }}
+  selector:
+    matchLabels: { app: {{ app.name }} }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: {{ app.name }}, version: "{{ app_version }}" }
+    spec:
+      # spread the replicas over the nodes, so draining one node (rolling-update.yml) never stops a service
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: {{ app.name }} }
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: {{ app.name }}
+          image: flashsale/{{ app.image }}:{{ app_version }}
+          imagePullPolicy: Never
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: flashsale-config }
+          env:
+            - { name: OTEL_SERVICE_NAME, value: "{{ app.image }}" }
+{% for key in app.secrets %}
+            - name: {{ key }}
+              valueFrom: { secretKeyRef: { name: flashsale-secrets, key: {{ key }} } }
+{% endfor %}
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests: { cpu: 100m, memory: {{ app.mem }} }
+            limits: { cpu: "{{ app.cpu }}", memory: {{ app.mem }} }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: {} }]
+---
+# A drain (rolling-update.yml) evicts a pod only while another replica of the service stays available.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ app.name }}
+  namespace: {{ app_namespace }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: {{ app.name }} }
+{% if app.node_port %}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ app.name }}
+  namespace: {{ app_namespace }}
+spec:
+  type: NodePort
+  selector: { app: {{ app.name }} }
+  ports:
+    - { name: http, port: 8080, targetPort: http, nodePort: {{ app.node_port }} }
+{% endif %}
+{% endfor %}

@@ -1,0 +1,132 @@
+---
+- name: Base packages
+  ansible.builtin.apt:
+    name: [ufw, python3-apt, ca-certificates, curl, tar]
+    update_cache: true
+    cache_valid_time: 3600
+
+# ---- deploy user: the account every later play and every operator uses ----
+- name: Deploy user
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    groups: [sudo]
+    append: true
+
+- name: Deploy user may sudo without a password (key-only login, see sshd below)
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/{{ deploy_user }}
+    content: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Deploy user SSH key
+  ansible.posix.authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ lookup('ansible.builtin.file', deploy_pubkey_file) }}"
+    exclusive: true
+
+# ---- SSH hardening ----
+- name: SSH hardening (no root login, keys only)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-flashsale.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PubkeyAuthentication yes
+      X11Forwarding no
+    mode: "0644"
+    validate: sshd -t -f %s
+  notify: Reload ssh
+
+# ---- firewall: SSH from anywhere, the platform subnet, and on k3s nodes the pod/service networks; nothing else ----
+- name: Host firewall
+  when: common_firewall
+  block:
+    - name: Firewall allows SSH
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Firewall allows the nodes of the platform
+      community.general.ufw:
+        rule: allow
+        from_ip: "{{ item }}"
+      loop: "{{ trusted_cidrs }}"
+
+    # k3s nodes: pods and services talk to the node (DNS, API server, kubelet probes) and to pods on other nodes.
+    - name: Firewall allows the k3s pod and service networks
+      community.general.ufw:
+        rule: allow
+        from_ip: "{{ item }}"
+      loop: ["{{ k3s_pod_cidr }}", "{{ k3s_service_cidr }}"]
+      when: inventory_hostname in groups['k3s']
+
+    - name: Firewall allows the CNI interfaces (pod bridge, flannel VXLAN)
+      community.general.ufw:
+        rule: allow
+        direction: in
+        interface: "{{ item }}"
+      loop: [cni0, flannel.1]
+      when: inventory_hostname in groups['k3s']
+
+    - name: Routed traffic is allowed (Docker containers, pods)
+      ansible.builtin.lineinfile:
+        path: /etc/default/ufw
+        regexp: ^DEFAULT_FORWARD_POLICY=
+        line: DEFAULT_FORWARD_POLICY="ACCEPT"
+      notify: Reload ufw
+
+    - name: Firewall on, deny incoming by default
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+- name: Host firewall off where Kubernetes owns iptables
+  community.general.ufw:
+    state: disabled
+  when: not common_firewall
+
+# ---- node_exporter (host metrics for Prometheus) ----
+- name: Node_exporter system user
+  ansible.builtin.user:
+    name: node_exporter
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Installed node_exporter version
+  ansible.builtin.command: /usr/local/bin/node_exporter --version
+  register: common_node_exporter_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Download node_exporter {{ node_exporter_version }}
+  ansible.builtin.unarchive:
+    src: "{{ common_node_exporter_url }}"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts: [--strip-components=1, --wildcards, "*/node_exporter"]
+    owner: root
+    group: root
+    mode: "0755"
+  when: node_exporter_version not in (common_node_exporter_installed.stdout | default('')) + (common_node_exporter_installed.stderr | default(''))
+  notify: Restart node_exporter
+
+- name: Node_exporter systemd unit
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: "0644"
+  notify: Restart node_exporter
+
+- name: Node_exporter running
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true

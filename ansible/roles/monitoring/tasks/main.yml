@@ -1,0 +1,69 @@
+---
+- name: Monitoring directories
+  ansible.builtin.file:
+    path: "{{ app_dir }}/monitoring/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [prometheus, grafana/provisioning/datasources, grafana/provisioning/dashboards, grafana/dashboards]
+
+# Docker creates a missing bind-mount source as a directory. An old container restarted before Ansible wrote the
+# file (node reinstalled, Docker data kept) left a directory where the config file belongs: remove it.
+- name: Config path is not a directory left by Docker
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/monitoring/prometheus/prometheus.yml"
+  register: monitoring_config
+
+- name: Remove the stray directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}/monitoring/prometheus/prometheus.yml"
+    state: absent
+  when: monitoring_config.stat.isdir | default(false)
+
+- name: Prometheus configuration (node_exporter of every node, the gateway NodePort)
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ app_dir }}/monitoring/prometheus/prometheus.yml"
+    mode: "0644"
+  notify: Restart prometheus
+
+- name: Grafana provisioning (datasource, dashboard provider)
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ app_dir }}/monitoring/grafana/provisioning/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: datasource.yml.j2, dest: datasources/prometheus.yml }
+    - { src: dashboards.yml.j2, dest: dashboards/flashsale.yml }
+  notify: Restart grafana
+
+- name: Dashboards (the same JSON as the compose stack, plus node metrics)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../deploy/compose/grafana/dashboards/"
+    dest: "{{ app_dir }}/monitoring/grafana/dashboards/"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Prometheus
+  community.docker.docker_container:
+    name: flashsale-prometheus
+    image: "{{ prometheus_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["9090:9090"]
+    volumes:
+      - "{{ app_dir }}/monitoring/prometheus:/etc/prometheus:ro" # a directory mount: never auto-created as a dir
+      - prometheus-data:/prometheus
+
+- name: Grafana
+  community.docker.docker_container:
+    name: flashsale-grafana
+    image: "{{ grafana_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["3000:3000"]
+    env:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+    volumes:
+      - "{{ app_dir }}/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "{{ app_dir }}/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - grafana-data:/var/lib/grafana
+  no_log: true

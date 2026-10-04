@@ -1,0 +1,26 @@
+# Rendered by Ansible (role app_deploy). Non-secret settings; secrets are in the flashsale-secrets Secret (vault).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flashsale-config
+  namespace: {{ app_namespace }}
+data:
+  DB_HOST: oracle
+  DB_SERVICE: {{ oracle_service }}
+  DB_USER: {{ app_db_user }}
+  DB_POOL_MAX: "20"
+  REDIS_ADDR: redis:6379
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  KAFKA_BROKERS: kafka:9092
+  INVENTORY_URL: http://inventory:8080
+  ORDER_URL: http://order:8080
+  STOCK_STRATEGY: atomic
+  OUTBOX_WORKERS: "2"
+  RATELIMIT_MODE: embedded
+  RATELIMIT_ALGORITHM: token_bucket
+  RL_USER_LIMIT: "20"
+  RL_IP_LIMIT: "100"
+  # Tracing off in the lab (no Jaeger here): empty endpoint for Go, no agent for Java.
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  JAVA_TOOL_OPTIONS: ""

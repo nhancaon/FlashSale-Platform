@@ -14,7 +14,8 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
 | 6a | Observability: metrics, Grafana dashboard, tracing (Jaeger) | Xong: dashboard provisioned, 1 trace xuyên gateway-order-inventory (`make trace-check`) |
 | 6b | Load test + benchmark Go vs Java | Xong: 6 lượt x 600 VU, reconcile PASS cả 6; tìm và sửa 3 lỗi thật. Báo cáo: [docs/benchmark-report.md](docs/benchmark-report.md) |
-| 7 | CI/CD (GitHub Actions) | Workflow ci-go, ci-java, docker (Trivy + GHCR + bảng size), security, ansible (chờ Phase 8), loadtest nightly; các bước đã chạy sạch trên máy (`make lint`, `make security-scan`, `make loadtest-smoke`), xem tab Actions cho lần chạy trên GitHub. ADR 0010 |
+| 7 | CI/CD (GitHub Actions) | Workflow ci-go, ci-java, docker (Trivy + GHCR + bảng size), security, ansible (lint + dựng lab thật + kiểm idempotency), loadtest nightly; các bước đã chạy sạch trên máy (`make lint`, `make security-scan`, `make loadtest-smoke`), xem tab Actions cho lần chạy trên GitHub. ADR 0010 |
+| 8 | Ansible + k3s (lab 3 node container) | Xong: site.yml dựng toàn bộ từ máy trắng, idempotent (changed=0), đơn hàng CONFIRMED qua gateway trên k3s, rolling update serial: 1 đo được (ADR 0011) |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -161,7 +162,38 @@ cổ chai là order + Oracle, không phải inventory; khác biệt nằm ở t�
 | `ci-java` | push/PR sửa code Java | `./mvnw verify`: test (Testcontainers), Checkstyle, JaCoCo |
 | `docker` | push/PR sửa services | build 8 image, kiểm tra non-root, Trivy (chặn CRITICAL có bản vá), push GHCR từ main, bảng size Go vs Java |
 | `security` | push, PR, hằng tuần | Trivy dependency Go + cấu hình (Dockerfile, compose) |
-| `ansible` | sửa `ansible/` | ansible-lint + `--check` (bật khi có playbook ở Phase 8) |
+| `ansible` | sửa `ansible/`, `deploy/lab`, `deploy/k8s` | ansible-lint, dựng lab 3 node, site.yml, đặt 1 đơn qua gateway k3s, chạy lại phải `changed=0` |
 | `loadtest` | hằng đêm, thủ công | cả stack với inventory go và java: e2e + k6 smoke + reconcile |
 
 Chạy lại trên máy: `make lint`, `make security-scan`, `make loadtest-smoke`. Quyết định và giới hạn: `docs/adr/0010-ci-cd.md`.
+
+## Ansible + k3s (Phase 8)
+
+Ba container Ubuntu (systemd + SSH) đóng vai VM, thêm một container controller chạy Ansible (`deploy/lab`, ADR 0011):
+`lab-data` (Docker, Oracle, Redis, Kafka, Prometheus, Grafana), `lab-k3s-server`, `lab-k3s-agent` (k3s + ứng dụng).
+
+```bash
+make down            # lab cần ~5 GB RAM của Docker
+make lab-up          # dựng 3 node + controller, cài khoá SSH bootstrap
+make lab-images      # build image, tag theo commit, lưu tar cho Ansible
+make lab-site        # ansible-playbook site.yml (chạy lại: changed=0)
+make lab-rolling     # rolling-update.yml (serial: 1) + đo gateway mỗi giây
+make lab-down        # dừng (make lab-destroy để xoá cả volume)
+```
+
+Gateway trên k3s: http://localhost:18088 (mật khẩu demo nằm trong vault: `docker exec -w /repo/ansible lab-controller
+ansible-vault view group_vars/all/vault.yml`). Grafana của lab: http://localhost:13000, Prometheus: http://localhost:19090.
+
+| Role | Làm gì |
+|---|---|
+| common | user `deploy` (sudo, chỉ SSH key), tắt root SSH và mật khẩu, ufw, node_exporter |
+| docker | Docker (gói Ubuntu) trên node data |
+| oracle | Oracle Free, redo log 512 MB, migration bằng chính `db/migrate.sh` |
+| redis_kafka | Redis, Kafka KRaft quảng bá IP node data |
+| monitoring | Prometheus (node_exporter mọi node + NodePort ứng dụng), Grafana cùng dashboard |
+| k3s | server rồi agent, version cố định, token từ vault, CoreDNS 2 replica + PDB |
+| app_deploy | nạp image vào containerd mọi node, Secret từ vault, manifest `deploy/k8s/*.j2`, chờ rollout |
+
+Secret nằm trong `ansible/group_vars/all/vault.yml` (Ansible Vault, mật khẩu từ `FLASHSALE_VAULT_PASSWORD`).
+Rolling update đo được: trước khi có PodDisruptionBudget và 2 CoreDNS, mỗi lần drain mất cả nền tảng ~18 s; sau khi sửa
+còn tối đa 3 s trên chính node đang restart (load balancer có health check sẽ bỏ qua node đó).

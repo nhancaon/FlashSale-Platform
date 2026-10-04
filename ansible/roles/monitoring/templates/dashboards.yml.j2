@@ -1,0 +1,10 @@
+# Managed by Ansible (role monitoring)
+apiVersion: 1
+providers:
+  - name: flashsale
+    folder: FlashSale
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

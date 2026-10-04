@@ -1,0 +1,32 @@
+---
+# Whole platform on fresh servers:  ansible-playbook site.yml [-e app_version=<git sha>]
+# Every role is idempotent: a second run reports no change.
+
+- name: Bootstrap (deploy user, SSH hardening, firewall, node_exporter)
+  hosts: all
+  become: true
+  vars:
+    ansible_user: "{{ bootstrap_user }}"
+  roles:
+    - common
+
+- name: Data node (Docker, Oracle, Redis, Kafka, monitoring)
+  hosts: data
+  become: true
+  roles:
+    - docker
+    - oracle
+    - redis_kafka
+    - monitoring
+
+- name: Kubernetes (k3s server, then agents)
+  hosts: k3s
+  become: true
+  roles:
+    - k3s
+
+- name: Applications on k3s
+  hosts: k3s
+  become: true
+  roles:
+    - app_deploy

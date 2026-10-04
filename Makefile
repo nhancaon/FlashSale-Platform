@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: lab-up lab-images lab-site lab-check lab-rolling lab-down lab-destroy lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -75,6 +75,28 @@ security-scan: ## Như CI: Trivy trên dependency Go, cấu hình, và image đ�
 
 loadtest-smoke: ## k6 smoke qua gateway + reconcile (cần make up-apps với RL_IP_LIMIT lớn, xem loadtest.yml)
 	bash loadtest/smoke.sh
+
+# ---- Ansible lab (Phase 8): 3 container "VM" + controller; cần ~5 GB RAM cho Docker, nên make down trước ----
+lab-up: env-sync ## Dựng 3 node lab (systemd + SSH) và controller Ansible
+	bash scripts/lab.sh up
+
+lab-images: ## Build image service, tag theo commit, lưu tar cho Ansible
+	bash scripts/lab.sh images
+
+lab-site: ## ansible-playbook site.yml: common, docker, oracle, redis_kafka, monitoring, k3s, app_deploy
+	bash scripts/lab.sh ansible site.yml
+
+lab-check: ## site.yml --check --diff (chạy lại phải không còn thay đổi)
+	bash scripts/lab.sh check
+
+lab-rolling: ## rolling-update.yml (serial: 1) trong lúc gọi gateway mỗi giây
+	bash scripts/lab.sh rolling
+
+lab-down: ## Dừng lab (giữ volume)
+	bash scripts/lab.sh down
+
+lab-destroy: ## Xoá lab và volume
+	bash scripts/lab.sh destroy
 
 check-lua: ## Script Lua của rate limiter phải giống nhau giữa Go và Java
 	@for f in fixed_window sliding_window token_bucket; do \

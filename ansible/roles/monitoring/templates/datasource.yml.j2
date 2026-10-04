@@ -1,0 +1,9 @@
+# Managed by Ansible (role monitoring)
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://{{ data_ip }}:9090
+    isDefault: true

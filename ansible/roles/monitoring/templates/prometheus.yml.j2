@@ -1,0 +1,25 @@
+# Managed by Ansible (role monitoring). Job names match the compose stack, so the same dashboard works.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs: [{ targets: ["localhost:9090"] }]
+
+  - job_name: node
+    static_configs:
+      - targets:
+{% for host in groups['all'] %}
+          - "{{ hostvars[host].ansible_host }}:9100"
+{% endfor %}
+
+  # Applications in k3s, through their NodePorts on the server node (kube-proxy balances across replicas).
+  - job_name: gateway
+    static_configs: [{ targets: ["{{ k3s_server_ip }}:{{ gateway_node_port }}"] }]
+  - job_name: order
+    static_configs: [{ targets: ["{{ k3s_server_ip }}:{{ order_node_port }}"] }]
+  - job_name: inventory-{{ inventory_impl }}
+    static_configs: [{ targets: ["{{ k3s_server_ip }}:{{ inventory_node_port }}"] }]
+  - job_name: notification
+    static_configs: [{ targets: ["{{ k3s_server_ip }}:{{ notification_node_port }}"] }]

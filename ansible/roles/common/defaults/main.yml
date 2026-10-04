@@ -1,0 +1,6 @@
+---
+common_node_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] | default('amd64') }}"
+common_node_exporter_url: >-
+  https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/{{ common_node_exporter_tarball }}
+common_node_exporter_tarball: node_exporter-{{ node_exporter_version }}.linux-{{ common_node_arch }}.tar.gz
+common_firewall: true

@@ -1,0 +1,8 @@
+---
+- name: Restart prometheus
+  ansible.builtin.command: docker restart flashsale-prometheus
+  changed_when: true
+
+- name: Restart grafana
+  ansible.builtin.command: docker restart flashsale-grafana
+  changed_when: true
