@@ -86,7 +86,7 @@ public class OrderService {
 		if (existing.status() != OrderStatus.PENDING) {
 			return new CreateResult(existing, true);
 		}
-		if (!store.isStale(existing.id(), staleAfterSeconds)) {
+		if (!store.claimStale(existing.id(), staleAfterSeconds)) {
 			throw ApiErrors.inProgress(existing.id());
 		}
 		// Abandoned: the first request died or the saga was left half done. Resume it (all steps are idempotent).

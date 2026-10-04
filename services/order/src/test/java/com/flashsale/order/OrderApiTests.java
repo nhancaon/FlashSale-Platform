@@ -14,6 +14,9 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.flashsale.order.repository.OrderStore;
+import com.flashsale.order.saga.PendingOrderRecovery;
+
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,6 +39,7 @@ import org.springframework.test.context.DynamicPropertySource;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
 		"order.payment.latency-ms=0", "order.stale-after-ms=1000", "order.inventory.retry-max-attempts=2",
 		"order.inventory.retry-wait-ms=5", "order.inventory.breaker-window=10", "order.inventory.read-timeout-ms=500",
+		"order.recovery.interval-ms=3600000", // tests call recoverOnce() themselves
 		"management.defaults.metrics.export.enabled=true", "management.prometheus.metrics.export.enabled=true" })
 class OrderApiTests {
 
@@ -68,6 +72,12 @@ class OrderApiTests {
 
 	@Autowired
 	CircuitBreakerRegistry breakers;
+
+	@Autowired
+	PendingOrderRecovery recovery;
+
+	@Autowired
+	OrderStore store;
 
 	private final HttpClient http = HttpClient.newHttpClient();
 
@@ -304,6 +314,63 @@ class OrderApiTests {
 		assertThat(resumed.status()).isEqualTo(200);
 		assertThat(resumed.body().get("status").asString()).isEqualTo("CONFIRMED");
 		assertThat(events(first.body().get("id").asString())).containsExactly("ORDER_CREATED", "ORDER_CONFIRMED");
+	}
+
+	@Test
+	void anAbandonedPendingOrderIsFinishedByTheRecoveryJobWithoutAnyClientRetry() throws Exception {
+		String sku = newSku("5");
+		inventory.failingPaths.add("/v1/inventory/confirm");
+		Resp first = post(user(), UUID.randomUUID().toString(), order(sku, "1"));
+		assertThat(first.status()).isEqualTo(202);
+		String id = first.body().get("id").asString();
+
+		// The client gave up. While the order is young the job leaves it alone (its request may still be running).
+		inventory.failingPaths.clear();
+		breakers.circuitBreaker("inventory").reset();
+		recovery.recoverOnce();
+		assertThat(status(id)).isEqualTo("PENDING");
+
+		Thread.sleep(1500); // past order.stale-after-ms
+		// Oldest first, one batch per call: on a shared dev database older abandoned orders may come before ours.
+		for (int i = 0; i < 20 && status(id).equals("PENDING"); i++) {
+			recovery.recoverOnce();
+		}
+		assertThat(status(id)).isEqualTo("CONFIRMED");
+		assertThat(events(id)).containsExactly("ORDER_CREATED", "ORDER_CONFIRMED");
+		recovery.recoverOnce();
+		assertThat(events(id)).as("a final order is never resumed again").hasSize(2);
+	}
+
+	@Test
+	void onlyOneCallerClaimsAStaleOrder() throws Exception {
+		String sku = newSku("5");
+		inventory.failingPaths.add("/v1/inventory/confirm");
+		String id = post(user(), UUID.randomUUID().toString(), order(sku, "1")).body().get("id").asString();
+		Thread.sleep(1500);
+
+		List<Future<Boolean>> claims = new ArrayList<>();
+		try (var pool = Executors.newFixedThreadPool(8)) {
+			for (int i = 0; i < 8; i++) {
+				claims.add(pool.submit(() -> store.claimStale(id, 1)));
+			}
+		}
+		int won = 0;
+		for (Future<Boolean> c : claims) {
+			won += c.get() ? 1 : 0;
+		}
+		assertThat(won).as("client retries and recovery jobs of every replica race on the same row").isEqualTo(1);
+
+		// Leave nothing PENDING behind on the shared dev database.
+		inventory.failingPaths.clear();
+		Thread.sleep(1100);
+		for (int i = 0; i < 20 && status(id).equals("PENDING"); i++) {
+			recovery.recoverOnce();
+		}
+		assertThat(status(id)).isEqualTo("CONFIRMED");
+	}
+
+	private String status(String orderId) {
+		return jdbc.sql("SELECT status FROM orders WHERE id = :id").param("id", orderId).query(String.class).single();
 	}
 
 	// ---- validation ----

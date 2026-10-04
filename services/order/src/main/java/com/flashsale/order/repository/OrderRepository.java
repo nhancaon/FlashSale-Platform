@@ -93,11 +93,25 @@ public class OrderRepository {
 		return wallClock.toInstant(java.time.ZoneOffset.UTC);
 	}
 
-	/** True when the order was last touched more than {@code seconds} ago, judged by the database clock. */
-	public boolean isStale(String orderId, long seconds) {
+	/** Ids of PENDING orders untouched for more than {@code seconds} (oldest first), for the recovery job. */
+	public List<String> findStalePending(long seconds, int limit) {
 		return jdbc.sql("""
-				SELECT CASE WHEN updated_at < CAST(SYSTIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:secs, 'SECOND') THEN 1 ELSE 0 END
-				FROM orders WHERE id = :id""").param("secs", seconds).param("id", orderId)
-				.query(Integer.class).optional().orElse(0) == 1;
+				SELECT id FROM orders
+				WHERE status = 'PENDING' AND updated_at < CAST(SYSTIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:secs, 'SECOND')
+				ORDER BY updated_at OFFSET 0 ROWS FETCH NEXT :lim ROWS ONLY""")
+				.param("secs", seconds).param("lim", limit).query(String.class).list();
+	}
+
+	/**
+	 * Takes over an abandoned PENDING order: true when it was untouched for more than {@code seconds} (database clock)
+	 * and this caller refreshed updated_at first. Concurrent callers (a client retry, the recovery job of any replica)
+	 * race on the same row and only one wins per stale period, so a saga is not resumed twice at once.
+	 */
+	public boolean claimStale(String orderId, long seconds) {
+		return jdbc.sql("""
+				UPDATE orders SET updated_at = SYSTIMESTAMP
+				WHERE id = :id AND status = 'PENDING'
+				AND updated_at < CAST(SYSTIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:secs, 'SECOND')""")
+				.param("id", orderId).param("secs", seconds).update() == 1;
 	}
 }

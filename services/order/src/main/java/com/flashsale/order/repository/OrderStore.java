@@ -53,8 +53,16 @@ public class OrderStore {
 		return repo.findById(order.id()).orElseThrow();
 	}
 
-	public boolean isStale(String orderId, long seconds) {
-		return repo.isStale(orderId, seconds);
+	public boolean claimStale(String orderId, long seconds) {
+		return Boolean.TRUE.equals(tx.execute(s -> repo.claimStale(orderId, seconds)));
+	}
+
+	public List<String> findStalePending(long seconds, int limit) {
+		return repo.findStalePending(seconds, limit);
+	}
+
+	public java.util.Optional<Order> find(String orderId) {
+		return repo.findById(orderId);
 	}
 
 	private String payload(Order o) {
