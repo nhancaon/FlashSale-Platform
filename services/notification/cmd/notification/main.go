@@ -46,6 +46,7 @@ func run(logger *slog.Logger) error {
 	}
 	defer db.Close()
 	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(5) // the default (2) closes connections above it: Oracle session churn under load
 
 	group := env("KAFKA_GROUP", "notification")
 	reader := kafka.NewReader(kafka.ReaderConfig{

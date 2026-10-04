@@ -60,6 +60,7 @@ func run(logger *slog.Logger) error {
 	defer db.Close()
 	workers := envInt("OUTBOX_WORKERS", 3)
 	db.SetMaxOpenConns(workers + 2)
+	db.SetMaxIdleConns(workers + 2) // the default (2) closes connections above it: Oracle session churn under load
 
 	brokers := strings.Split(env("KAFKA_BROKERS", "localhost:29092"), ",")
 	topic := env("KAFKA_TOPIC", "flashsale.order-events")

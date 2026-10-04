@@ -54,8 +54,14 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("open oracle: %w", err)
 	}
 	defer db.Close()
-	db.SetMaxOpenConns(envInt("DB_POOL_MAX", 20))
-	db.SetMaxIdleConns(envInt("DB_POOL_MIN_IDLE", 5))
+	// Same behaviour as Hikari in inventory-java: up to DB_POOL_MAX connections stay open while busy and are closed
+	// after 10 idle minutes. MaxIdleConns must NOT be the "minimum idle" (5): database/sql closes every connection
+	// returned above that number, so under a burst the service opened and closed Oracle sessions non-stop and the
+	// listener answered ORA-12516 (found by the Phase 6b load test: 503s on every inventory-go run).
+	poolMax := envInt("DB_POOL_MAX", 20)
+	db.SetMaxOpenConns(poolMax)
+	db.SetMaxIdleConns(poolMax)
+	db.SetConnMaxIdleTime(10 * time.Minute)
 	db.SetConnMaxLifetime(30 * time.Minute)
 
 	shutdownTracing, err := telemetry.Setup(context.Background(), "inventory-go")
