@@ -1,6 +1,6 @@
 # Build context: services/ (the gateway imports the limiter library of ratelimiter-go through a go.mod replace).
 #   docker build -f gateway/Dockerfile services
-FROM golang:1.26-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /src
 # Dependencies first, so they are cached until a go.mod changes.
 COPY ratelimiter-go/go.mod ratelimiter-go/go.sum ratelimiter-go/
