@@ -126,7 +126,6 @@ type fakeFetcher struct {
 	mu        sync.Mutex
 	queue     []kafka.Message
 	committed []int64
-	idle      chan struct{}
 }
 
 func (f *fakeFetcher) FetchMessage(ctx context.Context) (kafka.Message, error) {

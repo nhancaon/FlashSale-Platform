@@ -88,9 +88,9 @@ func (b *oracleBatch) MarkSent(ctx context.Context, ids []int64) error {
 		placeholders[i] = fmt.Sprintf(":%d", i+1)
 		args[i] = id
 	}
-	_, err := b.tx.ExecContext(ctx,
-		"UPDATE outbox_events SET status = 'SENT', sent_at = SYSTIMESTAMP, last_error = NULL WHERE id IN ("+
-			strings.Join(placeholders, ",")+")", args...)
+	query := "UPDATE outbox_events SET status = 'SENT', sent_at = SYSTIMESTAMP, last_error = NULL WHERE id IN (" + //nolint:gosec // only ":1,:2,..." placeholders are concatenated; values are binds
+		strings.Join(placeholders, ",") + ")"
+	_, err := b.tx.ExecContext(ctx, query, args...)
 	return err
 }
 

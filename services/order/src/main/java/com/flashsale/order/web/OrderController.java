@@ -10,7 +10,6 @@ import com.flashsale.order.OrderService.CreateResult;
 import com.flashsale.order.domain.ApiErrors;
 import com.flashsale.order.domain.Domain.ItemRequest;
 import com.flashsale.order.domain.Domain.Order;
-import com.flashsale.order.domain.Domain.OrderStatus;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

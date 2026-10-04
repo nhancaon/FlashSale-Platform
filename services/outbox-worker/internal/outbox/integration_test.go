@@ -165,8 +165,8 @@ func TestConcurrentClaimsAreDisjoint(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, a)
 	require.NotNil(t, b)
-	defer a.Rollback()
-	defer b.Rollback()
+	defer func() { _ = a.Rollback() }()
+	defer func() { _ = b.Rollback() }()
 
 	ids := map[int64]bool{}
 	for _, e := range append(a.Events(), b.Events()...) {
@@ -187,7 +187,7 @@ func TestNewerEventWaitsForTheOlderOneOfTheSameAggregate(t *testing.T) {
 	first, err := src.Claim(context.Background(), 1)
 	require.NoError(t, err)
 	require.NotNil(t, first)
-	defer first.Rollback()
+	defer func() { _ = first.Rollback() }()
 	assert.Equal(t, "E1", first.Events()[0].Type)
 
 	second, err := src.Claim(context.Background(), 10)
@@ -249,7 +249,7 @@ type crashingBatch struct {
 // publish and commit.
 func (b crashingBatch) Commit() error {
 	if b.crash {
-		_ = b.Batch.Rollback()
+		_ = b.Rollback()
 		simulatedCrashes.Add(1)
 		return errors.New("simulated crash between publish and commit")
 	}

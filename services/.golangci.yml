@@ -1,0 +1,26 @@
+# Shared by every Go module under services/ (golangci-lint looks for the config in parent directories).
+version: "2"
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+    - noctx
+    - sqlclosecheck
+    - rowserrcheck
+  settings:
+    misspell:
+      ignore-rules: [strat] # short for "strategy", not a typo of "start"
+  exclusions:
+    presets:
+      # Unchecked errors from deferred Close/Flush and fmt printing: the usual Go idiom, nothing useful to do with them.
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters: [gosec, noctx]
+formatters:
+  enable:
+    - gofmt
+    - goimports

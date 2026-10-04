@@ -6,6 +6,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -58,7 +59,7 @@ func (r *Redis) Get(ctx context.Context, sku string) (Stock, bool) {
 			r.OnHit()
 			return Stock{SKU: sku, Available: a, Reserved: b}, true
 		}
-	} else if err != redis.Nil {
+	} else if !errors.Is(err, redis.Nil) {
 		r.log.Warn("stock cache read failed, falling back to Oracle", "error", err)
 	}
 	r.OnMiss()

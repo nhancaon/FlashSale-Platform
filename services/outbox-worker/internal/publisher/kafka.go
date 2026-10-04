@@ -104,7 +104,7 @@ func waitForLeaders(ctx context.Context, conn *kafka.Conn, topic string, partiti
 			return nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("topic %s has no leaders after 15s (err=%v)", topic, err)
+			return errors.Join(fmt.Errorf("topic %s has no leaders after 15s", topic), err)
 		}
 		select {
 		case <-time.After(200 * time.Millisecond):

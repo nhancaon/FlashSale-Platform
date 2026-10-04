@@ -85,7 +85,7 @@ func (o optimistic) TryReserve(ctx context.Context, ops store.StockOps, productI
 			return true, nil
 		}
 		// Lost the race: back off a little so the winners can finish.
-		backoff := time.Duration(100_000 + rand.Int64N(2_000_000*int64(min(attempt+1, 10))))
+		backoff := time.Duration(100_000 + rand.Int64N(2_000_000*int64(min(attempt+1, 10)))) //nolint:gosec // jitter, not security
 		select {
 		case <-time.After(backoff):
 		case <-ctx.Done():

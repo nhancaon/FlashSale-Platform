@@ -18,7 +18,7 @@ func (o *Oracle) Process(ctx context.Context, consumer string, eventID int64, n 
 	if err != nil {
 		return false, err
 	}
-	defer tx.Rollback() // no-op after Commit
+	defer func() { _ = tx.Rollback() }() // no-op after Commit
 
 	if _, err := tx.ExecContext(ctx, "INSERT INTO processed_events (event_id, consumer) VALUES (:1, :2)", eventID, consumer); err != nil {
 		var oe *network.OracleError

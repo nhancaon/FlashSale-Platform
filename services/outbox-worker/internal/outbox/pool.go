@@ -38,7 +38,7 @@ func (p *Pool) loop(ctx context.Context, id int) {
 		case err != nil && ctx.Err() == nil:
 			failures++
 			wait := min(p.PollInterval<<min(failures, 8), p.MaxBackoff)
-			wait += time.Duration(rand.Int64N(int64(wait/2) + 1)) // jitter so workers do not retry in lockstep
+			wait += time.Duration(rand.Int64N(int64(wait/2) + 1)) //nolint:gosec // jitter so workers do not retry in lockstep
 			p.Log.Warn("outbox batch failed, backing off", "worker", id, "error", err, "wait", wait)
 			sleep(ctx, wait)
 		case n == 0:

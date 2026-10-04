@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
  * Business errors with the stable error code of the API contract
  * ({"code": "...", "message": "..."}). Both language implementations use the same codes.
  */
-public class DomainErrors {
+public final class DomainErrors {
 
 	private DomainErrors() {
 	}

@@ -77,14 +77,15 @@ func Handler(u Upstream, log *slog.Logger, state *prometheus.GaugeVec) http.Hand
 		IdleConnTimeout:       60 * time.Second,
 		ResponseHeaderTimeout: u.Timeout,
 	}
-	trips := max(u.BreakerTrips, 5)
+	trips := uint32(min(max(u.BreakerTrips, 5), 1_000_000)) //nolint:gosec // clamped above, cannot overflow
+	//nolint:bodyclose // the breaker only passes the response through; ReverseProxy closes its body
 	cb := gobreaker.NewCircuitBreaker[*http.Response](gobreaker.Settings{
 		Name:        u.Name,
 		MaxRequests: 5, // probes allowed while half-open
 		Interval:    30 * time.Second,
 		Timeout:     u.BreakerOpen,
 		ReadyToTrip: func(c gobreaker.Counts) bool {
-			return c.Requests >= uint32(trips) && float64(c.TotalFailures)/float64(c.Requests) >= 0.5
+			return c.Requests >= trips && float64(c.TotalFailures)/float64(c.Requests) >= 0.5
 		},
 		OnStateChange: func(name string, from, to gobreaker.State) {
 			log.Warn("circuit breaker state change", "upstream", name, "from", from.String(), "to", to.String())
