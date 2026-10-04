@@ -1,0 +1,45 @@
+name: security
+
+# Dependency and configuration scan of the repository (images are scanned in docker.yml).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 2 * * 1" # Mondays: new CVEs appear without any code change
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trivy-fs:
+    # Go modules only: resolving a pom needs its parent from Maven Central (rate limited, 429). Java dependencies are
+    # scanned where they really ship, in the image jar (docker.yml), which also covers transitive versions.
+    name: dependencies (go.mod)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: services
+          scanners: vuln
+          skip-dirs: services/ratelimiter-java,services/inventory-java,services/order
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+
+  trivy-config:
+    name: misconfiguration (Dockerfiles, compose)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+          trivyignores: .trivyignore

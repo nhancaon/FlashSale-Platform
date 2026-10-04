@@ -1,0 +1,45 @@
+name: ansible
+
+# ansible-lint + a dry run (--check) of the playbooks. The playbooks arrive in Phase 8; until then the job is skipped.
+on:
+  push:
+    branches: [main]
+    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+  pull_request:
+    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Any playbook yet?
+        id: present
+        run: |
+          if ls ansible/*.yml > /dev/null 2>&1; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "no playbook yet (Phase 8)"; fi
+      - uses: actions/setup-python@v6
+        if: steps.present.outputs.yes == 'true'
+        with:
+          python-version: "3.13"
+      - name: Install ansible + ansible-lint
+        if: steps.present.outputs.yes == 'true'
+        run: |
+          pip install ansible-core ansible-lint
+          if [ -f ansible/requirements.yml ]; then ansible-galaxy collection install -r ansible/requirements.yml; fi
+      - name: ansible-lint
+        if: steps.present.outputs.yes == 'true'
+        working-directory: ansible
+        run: ansible-lint
+      - name: Dry run against the CI inventory
+        if: steps.present.outputs.yes == 'true' && hashFiles('ansible/inventory/ci.yml') != ''
+        working-directory: ansible
+        run: |
+          for p in *.yml; do
+            [ "$p" = requirements.yml ] && continue
+            ansible-playbook -i inventory/ci.yml --syntax-check "$p"
+            ansible-playbook -i inventory/ci.yml --check "$p"
+          done

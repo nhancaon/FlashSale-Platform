@@ -29,3 +29,4 @@ loadtest/results/raw/
 
 # Local build output of scripts (contract-tests/run.sh)
 .build/
+loadtest/results/smoke/

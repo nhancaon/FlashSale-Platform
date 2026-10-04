@@ -1,0 +1,64 @@
+name: loadtest
+
+# Whole stack in Docker Compose, once with inventory-go and once with inventory-java:
+# end-to-end scripts, then a k6 smoke flash sale that fails on its thresholds or on the database reconcile.
+on:
+  schedule:
+    - cron: "0 3 * * *" # nightly
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: k6 virtual users
+        default: "50"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: e2e + k6 smoke (inventory-${{ matrix.inventory }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        inventory: [go, java]
+    env:
+      INVENTORY_IMPL: ${{ matrix.inventory }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Infrastructure
+        run: |
+          cp .env.example .env
+          make up
+          make db-migrate
+          make db-tune
+      - name: Application stack
+        run: make up-apps
+      - name: End-to-end (order, gateway with the default rate limits, 429 included)
+        run: |
+          make e2e
+          make e2e-gateway
+      - name: k6 smoke + reconcile
+        env:
+          # every request comes from one k6 container: the per-IP limit would measure the limiter, not the system
+          RL_IP_LIMIT: "100000000"
+          RL_USER_LIMIT: "1000"
+        run: |
+          make up-apps # recreates the gateway with the raised limits
+          VUS=${{ inputs.vus || '50' }} bash loadtest/smoke.sh
+      - name: k6 summary
+        if: always()
+        run: |
+          f=loadtest/results/smoke/smoke.k6.json
+          [ -f "$f" ] || exit 0
+          jq -r '"| metric | value |\n|---|---:|\n| orders created | \(.metrics.orders_created.count // 0) |\n| sold out answers | \(.metrics.orders_sold_out.count // 0) |\n| unexpected answers | \(.metrics.orders_unexpected.count // 0) |\n| p95 POST /api/orders (ms) | \(.metrics["http_req_duration{name:POST /api/orders}"]["p(95)"] | floor) |"' "$f" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-${{ matrix.inventory }}
+          path: loadtest/results/smoke/
+          if-no-files-found: ignore
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --env-file .env -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.apps.yml logs --tail=150

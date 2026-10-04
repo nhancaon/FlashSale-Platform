@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -62,6 +62,19 @@ test-go-race: .env ## go test -race trong container Linux (cần make up + make 
 
 test-java: ## ./mvnw test cho mọi service Java
 	@for s in $(JAVA_SERVICES); do echo "== $$s"; (cd services/$$s && ./mvnw -B -q test) || exit 1; done
+
+lint: ## Như CI: golangci-lint (services/.golangci.yml) + Checkstyle (services/checkstyle.xml) + actionlint
+	@for s in $(GO_SERVICES); do echo "== golangci-lint $$s"; MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD/services:/src" -v flashsale-gomod:/go/pkg/mod -v flashsale-gocache:/root/.cache -w /src/$$s golangci/golangci-lint:v2.14 golangci-lint run ./... || exit 1; done
+	@for s in $(JAVA_SERVICES); do echo "== checkstyle $$s"; (cd services/$$s && ./mvnw -B -q checkstyle:check) || exit 1; done
+	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -w /repo rhysd/actionlint:latest -no-color -oneline && echo "workflows ok"
+
+security-scan: ## Như CI: Trivy trên dependency Go, cấu hình, và image đã build (cần make up-apps trước)
+	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -v flashsale-trivy:/root/.cache -w /repo aquasec/trivy:latest fs --quiet --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --skip-dirs services/ratelimiter-java,services/inventory-java,services/order services
+	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -v flashsale-trivy:/root/.cache -w /repo aquasec/trivy:latest config --quiet --severity CRITICAL,HIGH --exit-code 1 .
+	@for i in $$(docker images --format '{{.Repository}}' | grep '^flashsale/' | sort -u); do echo "== $$i"; MSYS_NO_PATHCONV=1 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v flashsale-trivy:/root/.cache aquasec/trivy:latest image --quiet --severity CRITICAL --ignore-unfixed --exit-code 1 $$i:latest || exit 1; done
+
+loadtest-smoke: ## k6 smoke qua gateway + reconcile (cần make up-apps với RL_IP_LIMIT lớn, xem loadtest.yml)
+	bash loadtest/smoke.sh
 
 check-lua: ## Script Lua của rate limiter phải giống nhau giữa Go và Java
 	@for f in fixed_window sliding_window token_bucket; do \

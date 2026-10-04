@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directories: ["/services/ratelimiter-go", "/services/inventory-go", "/services/outbox-worker", "/services/notification", "/services/gateway", "/contract-tests"]
+    schedule: { interval: weekly }
+    groups:
+      go-deps: { patterns: ["*"] }
+  - package-ecosystem: maven
+    directories: ["/services/ratelimiter-java", "/services/inventory-java", "/services/order"]
+    schedule: { interval: weekly }
+    groups:
+      java-deps: { patterns: ["*"] }
+  - package-ecosystem: docker
+    directories: ["/services/*"]
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }

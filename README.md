@@ -14,6 +14,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
 | 6a | Observability: metrics, Grafana dashboard, tracing (Jaeger) | Xong: dashboard provisioned, 1 trace xuyên gateway-order-inventory (`make trace-check`) |
 | 6b | Load test + benchmark Go vs Java | Xong: 6 lượt x 600 VU, reconcile PASS cả 6; tìm và sửa 3 lỗi thật. Báo cáo: [docs/benchmark-report.md](docs/benchmark-report.md) |
+| 7 | CI/CD (GitHub Actions) | Workflow ci-go, ci-java, docker (Trivy + GHCR + bảng size), security, ansible (chờ Phase 8), loadtest nightly; các bước đã chạy sạch trên máy (`make lint`, `make security-scan`, `make loadtest-smoke`), xem tab Actions cho lần chạy trên GitHub. ADR 0010 |
 
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
@@ -151,3 +152,16 @@ cổ chai là order + Oracle, không phải inventory; khác biệt nằm ở t�
 [docs/benchmark-report.md](docs/benchmark-report.md).
 
 ![benchmark](docs/img/benchmark.svg)
+
+## CI/CD (Phase 7)
+
+| Workflow | Khi nào | Làm gì |
+|---|---|---|
+| `ci-go` | push/PR sửa code Go | golangci-lint, check-lua, `go test -race` + coverage trên Oracle/Redis/Kafka thật (compose) |
+| `ci-java` | push/PR sửa code Java | `./mvnw verify`: test (Testcontainers), Checkstyle, JaCoCo |
+| `docker` | push/PR sửa services | build 8 image, kiểm tra non-root, Trivy (chặn CRITICAL có bản vá), push GHCR từ main, bảng size Go vs Java |
+| `security` | push, PR, hằng tuần | Trivy dependency Go + cấu hình (Dockerfile, compose) |
+| `ansible` | sửa `ansible/` | ansible-lint + `--check` (bật khi có playbook ở Phase 8) |
+| `loadtest` | hằng đêm, thủ công | cả stack với inventory go và java: e2e + k6 smoke + reconcile |
+
+Chạy lại trên máy: `make lint`, `make security-scan`, `make loadtest-smoke`. Quyết định và giới hạn: `docs/adr/0010-ci-cd.md`.
