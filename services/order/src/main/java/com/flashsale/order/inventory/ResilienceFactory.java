@@ -27,8 +27,11 @@ public final class ResilienceFactory {
 				.waitDurationInOpenState(Duration.ofMillis(s.breakerOpenMs()))
 				.permittedNumberOfCallsInHalfOpenState(5)
 				.automaticTransitionFromOpenToHalfOpenEnabled(true)
+				// Only technical failures count against inventory. Business answers (OUT_OF_STOCK, other 4xx) are NOT
+				// ignored but counted as successes: inventory answered correctly. Ignoring them was a bug found by the load
+				// test: after a sell-out almost every call is OUT_OF_STOCK, the window then held only a handful of
+				// failures, the breaker opened against a healthy inventory and the gateway breaker followed (cascade).
 				.recordExceptions(InventoryGateway.TransientException.class)
-				.ignoreExceptions(InventoryGateway.OutOfStockException.class, InventoryGateway.RejectedException.class)
 				.build();
 	}
 

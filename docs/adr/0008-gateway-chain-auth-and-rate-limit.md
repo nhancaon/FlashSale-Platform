@@ -35,8 +35,11 @@ is logged and counted. For a flash sale, losing sales because the limiter is dow
 for a while; set it to `false` for endpoints where abuse matters more (it then answers 503).
 
 **Circuit breaker per upstream** (sony/gobreaker): opens when at least half of at least 10 recent requests failed, stays open 10 s,
-then lets 5 probes through. A failure is a transport error, a timeout or an HTTP 5xx; **4xx, including business 409s such as
-OUT_OF_STOCK, are healthy answers** (tested with 50 consecutive 409s). A 5xx is still relayed to the client while it is counted.
+then lets 5 probes through. A failure is a transport error, a timeout or an HTTP 5xx other than 503; **4xx, including business 409s such as
+OUT_OF_STOCK, are healthy answers** (tested with 50 consecutive 409s). **503 is a healthy answer too**: a fast, deliberate
+refusal by a service that is up (load shedding, or its own dependency is down). Counting it let order's inventory breaker
+open the gateway breaker as well and block every order route (cascade seen in the Phase 6b load test; regression test
+`TestUpstream503DoesNotTripTheBreaker`). A 5xx is still relayed to the client while it is counted.
 Open breaker: 503 `UPSTREAM_UNAVAILABLE` with `Retry-After`, without calling the upstream. Timeout: 504; unreachable: 502.
 Each upstream has its own breaker, so a dead inventory does not block orders.
 

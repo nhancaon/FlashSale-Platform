@@ -72,6 +72,21 @@ class InventoryGatewayTests {
 		assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
 	}
 
+	/** Regression from the load test: after a sell-out, a few failures among many OUT_OF_STOCK must not open the breaker. */
+	@Test
+	void businessAnswersCountAsSuccessSoAFewFailuresAfterASellOutDoNotOpenTheBreaker() {
+		HttpInventoryGateway gw = gateway(settings(1, 20, 10, 100), Duration.ofSeconds(2));
+		inventory.outOfStock.add("SKU");
+		for (int i = 0; i < 30; i++) {
+			assertThatThrownBy(() -> gw.reserve("o", "SKU", 1)).isInstanceOf(OutOfStockException.class);
+		}
+		inventory.failEverything = true;
+		for (int i = 0; i < 5; i++) {
+			assertThatThrownBy(() -> gw.reserve("o", "SKU", 1)).isInstanceOf(UnavailableException.class);
+		}
+		assertThat(breaker.getState()).as("5 failures in a window of 20 mostly healthy answers").isEqualTo(CircuitBreaker.State.CLOSED);
+	}
+
 	@Test
 	void transientFailuresAreRetriedWithBackoff() {
 		// Fails twice, then recovers: the third attempt succeeds and the caller never notices.

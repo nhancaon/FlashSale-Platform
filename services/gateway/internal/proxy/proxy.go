@@ -46,10 +46,13 @@ func (t *breakerTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		if err != nil {
 			return nil, err // connect error, timeout: a failure
 		}
-		if resp.StatusCode >= 500 {
+		if resp.StatusCode >= 500 && resp.StatusCode != http.StatusServiceUnavailable {
 			return resp, errUpstream5xx // a failure for the breaker, but the answer still goes to the client
 		}
-		return resp, nil // 2xx, 3xx and 4xx (including business 409s) are healthy answers
+		// 2xx, 3xx, 4xx (including business 409s) and 503 are healthy answers. A 503 is a deliberate, fast refusal by a
+		// service that is up (load shedding, or its own dependency is down): counting it would let one dependency's
+		// trouble open this breaker too and block every route of the service (a cascade the load test reproduced).
+		return resp, nil
 	})
 	if errors.Is(err, errUpstream5xx) {
 		return resp, nil

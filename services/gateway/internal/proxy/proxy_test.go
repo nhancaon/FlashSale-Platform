@@ -177,6 +177,16 @@ func TestBusinessErrorsDoNotTripTheBreaker(t *testing.T) {
 	assert.EqualValues(t, 50, u.hits.Load(), "every request reached the upstream")
 }
 
+func TestUpstream503DoesNotTripTheBreaker(t *testing.T) {
+	u := newUpstream(t)
+	u.status.Store(503) // the order service shedding load, or its inventory being down
+	h := handler(t, u, nil)
+	for i := 0; i < 30; i++ {
+		assert.Equal(t, 503, call(h, "GET", "/api/orders/1", nil).Code)
+	}
+	assert.EqualValues(t, 30, u.hits.Load(), "every request still reaches the upstream: no cascade")
+}
+
 func TestSlowUpstreamTimesOutWith504(t *testing.T) {
 	u := newUpstream(t)
 	u.delay.Store(500)
