@@ -10,7 +10,7 @@ RUN sh ./mvnw -B -q -DskipTests package && mv target/*.jar /app.jar
 
 # OpenTelemetry Java agent: traces HTTP, JDBC and the JDK HttpClient without code changes. It is only attached
 # when JAVA_TOOL_OPTIONS=-javaagent:/otel/agent.jar is set (compose does that), so benchmarks can run without it.
-FROM alpine:3.22 AS otel
+FROM alpine:3.24 AS otel
 RUN wget -q -O /agent.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 
 FROM eclipse-temurin:25-jre-alpine
