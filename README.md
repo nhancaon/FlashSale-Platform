@@ -18,10 +18,47 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 7 | CI/CD (GitHub Actions) | Workflow ci-go, ci-java, docker (Trivy + GHCR + bảng size), security, ansible (lint + dựng lab thật + kiểm idempotency), loadtest nightly; các bước đã chạy sạch trên máy (`make lint`, `make security-scan`, `make loadtest-smoke`), xem tab Actions cho lần chạy trên GitHub. ADR 0010 |
 | 8 | Ansible + k3s (lab 3 node container) | Xong: site.yml dựng toàn bộ từ máy trắng, idempotent (changed=0), đơn hàng CONFIRMED qua gateway trên k3s, rolling update serial: 1 đo được (ADR 0011) |
 
+## Kiến trúc
+
+```mermaid
+flowchart LR
+  client([Client]) -->|JWT, Idempotency-Key| gw[Gateway<br/>Go]
+  gw -->|rate limit| redis[(Redis)]
+  gw --> order[Order<br/>Java, saga]
+  order -->|reserve / confirm / release<br/>timeout, retry, breaker| inv[Inventory<br/>Go hoặc Java]
+  order --> ora[(Oracle)]
+  inv --> ora
+  inv -->|cache-aside| redis
+  ora -->|outbox, SKIP LOCKED| ow[Outbox worker x3<br/>Go]
+  ow --> kafka[[Kafka]]
+  kafka --> notif[Notification<br/>Go, idempotent]
+```
+
+Luồng một đơn hàng, các đảm bảo đúng đắn và test chứng minh: [docs/architecture.md](docs/architecture.md). Quyết định
+thiết kế: `docs/adr/` (11 ADR).
+
+## Kết quả chính
+
+| | |
+|---|---|
+| Đúng đắn dưới tải | 6 lượt x 600 VU: đúng 100 đơn bán / 100 hàng, 0 oversell, 0 đơn trùng, 0 đơn treo, mọi event gửi đúng 1 thông báo |
+| inventory Go vs Java (cùng 2 CPU / 1 GiB) | throughput, latency ngang nhau (~265 đơn/s, p95 ~33 ms); Go: RAM 26 vs 281 MiB, khởi động 0,6 vs 5,6 s, image 14 vs 134 MiB |
+| Load test tìm ra 3 lỗi thật | breaker dây chuyền sau khi hết hàng, đơn treo PENDING, pool Oracle của Go (ORA-12516); đã sửa, có test hồi quy |
+| Concurrency lab | 10 thí nghiệm Go vs Java, có chỗ Java thắng (CPU-bound, stream, tự phát hiện deadlock) |
+| Vận hành | CI 6 workflow + Trivy, Ansible + Vault dựng k3s 3 node idempotent, rolling update đo được, HPA |
+
+Chi tiết: [docs/benchmark-report.md](docs/benchmark-report.md), [docs/concurrency-comparison.md](docs/concurrency-comparison.md).
+
 ## Yêu cầu
 - Docker Desktop (đang chạy), `make`, Git Bash (Windows)
 
-## Chạy nhanh
+## Chạy một lệnh
+
+```bash
+make demo         # hạ tầng + migrate + mọi service + đặt thử một đơn qua gateway (lần đầu ~10 phút)
+```
+
+Từng bước:
 
 ```bash
 make up           # Oracle, Redis, Kafka, Prometheus, Grafana (lần đầu Oracle khởi động vài phút)
@@ -47,7 +84,6 @@ api/ db/migrations/ services/ contract-tests/ loadtest/
 deploy/compose/ deploy/k8s/ ansible/ labs/concurrency-lab/ docs/
 ```
 
-Sơ đồ kiến trúc, luồng một đơn hàng và các đảm bảo đúng đắn (kèm test chứng minh): [docs/architecture.md](docs/architecture.md).
 
 ## Rate limiter (Phase 1)
 
@@ -198,6 +234,25 @@ ansible-vault view group_vars/all/vault.yml`). Grafana của lab: http://localho
 Secret nằm trong `ansible/group_vars/all/vault.yml` (Ansible Vault, mật khẩu từ `FLASHSALE_VAULT_PASSWORD`).
 Rolling update đo được: trước khi có PodDisruptionBudget và 2 CoreDNS, mỗi lần drain mất cả nền tảng ~18 s; sau khi sửa
 còn tối đa 3 s trên chính node đang restart (load balancer có health check sẽ bỏ qua node đó).
+
+### HPA: tự scale theo CPU
+
+Gateway và inventory có HorizontalPodAutoscaler (2–4 pod, mục tiêu 60% CPU của request; metrics-server của k3s).
+`make lab-hpa` bắn tải k6 vào inventory (100 VU, ~24 000 req/s, 0 lỗi) và theo dõi:
+
+```
+20:14:55  inventory   cpu: 114%/60%   min 2   max 4   replicas 2
+20:15:11  inventory   cpu: 998%/60%   min 2   max 4   replicas 4     <- scale sau ~15 s
+20:15:11  gateway     cpu: 1%/60%     min 2   max 4   replicas 2     (không bị tải, giữ nguyên)
+```
+
+Log đầy đủ: `loadtest/results/hpa-k3s/hpa-watch.txt`. Deployment do HPA quản lý không khai báo `replicas`, nên chạy lại
+`site.yml` không kéo số pod về (vẫn `changed=0`).
+
+![Grafana của lab trong lúc tải: ~10 000 req/s vào inventory-go, p95 ~15 ms](docs/img/grafana-k3s-hpa.png)
+
+Ảnh chụp Grafana của lab (`http://localhost:13000`, xem không cần đăng nhập chỉ trong inventory lab). Các ô inventory-java,
+outbox-worker, ratelimiter bằng 0 vì lab không deploy hoặc không scrape chúng.
 
 ## Concurrency lab (Phase 2b)
 

@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: lab-go lab-java lab-report lab-up lab-images lab-site lab-check lab-rolling lab-down lab-destroy lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: lab-hpa demo lab-go lab-java lab-report lab-up lab-images lab-site lab-check lab-rolling lab-down lab-destroy lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -33,6 +33,14 @@ logs: .env ## Xem log (SERVICE=oracle để lọc)
 
 ps: .env ## Trạng thái container
 	$(COMPOSE) ps
+
+demo: ## MỘT LỆNH: hạ tầng + migrate + toàn bộ service + kiểm tra end-to-end qua gateway (lần đầu ~10 phút)
+	$(MAKE) up
+	bash db/migrate.sh
+	bash db/tune-redo.sh
+	$(MAKE) up-apps
+	bash scripts/e2e-gateway.sh
+	@echo "FlashSale chạy: gateway http://localhost:8088  Grafana http://localhost:3000  Jaeger http://localhost:16686"
 
 db-migrate: ## Áp dụng db/migrations lên Oracle (idempotent)
 	bash db/migrate.sh
@@ -101,6 +109,10 @@ lab-check: ## site.yml --check --diff (chạy lại phải không còn thay đ�
 
 lab-rolling: ## rolling-update.yml (serial: 1) trong lúc gọi gateway mỗi giây
 	bash scripts/lab.sh rolling
+
+lab-hpa: ## Bắn tải k6 vào inventory trên k3s và theo dõi HPA scale 2 -> 4 pod
+	MSYS_NO_PATHCONV=1 docker run -d --rm --name hpa-load --network flashsale-lab_lab -v "$$PWD/loadtest:/scripts:ro" grafana/k6 run --quiet /scripts/hpa.js
+	@for i in $$(seq 1 16); do date +%T; MSYS_NO_PATHCONV=1 docker exec lab-k3s-server k3s kubectl -n flashsale get hpa --no-headers; sleep 15; done
 
 lab-down: ## Dừng lab (giữ volume)
 	bash scripts/lab.sh down

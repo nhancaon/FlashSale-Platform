@@ -265,9 +265,6 @@ GitHub Actions:
 - Manifest k8s: Deployment, Service, ConfigMap, Secret, probes, resource requests/limits, **HPA** theo CPU.
 - **Xong khi**: `ansible-playbook -i inventory/dev.ini site.yml` dựng từ máy trống; chạy lần hai không có `changed` (idempotent); k6 bắn tải thì HPA tăng pod, chụp được dashboard.
 
-### Phase 9 (tuỳ chọn) — Ví mini
-- `wallet`, `ledger_entries` (bút toán kép), payment service, saga đầy đủ reserve → charge → confirm, compensation, test đối soát tổng tiền.
-
 ## 8. Quy ước cho Claude (copy sang CLAUDE.md)
 
 - Làm đúng một phase mỗi lần; trước khi code, nói ngắn kế hoạch và liệt kê file sẽ tạo/sửa.
@@ -317,7 +314,7 @@ timeout/breaker, xử lý ORA-xxxx. Chỉ ra lỗi tiềm ẩn và sửa.
 
 Bắt buộc: Phase 0 → 1 → 2 → 3 → 6 (bản rút gọn) → 7.
 Nên có: Phase 4, 5, 8.
-Để sau: Phase 9, tracing, Loki, ArgoCD, GraalVM native image.
+Để sau: tracing, Loki, ArgoCD, GraalVM native image.
 
 ---
 
