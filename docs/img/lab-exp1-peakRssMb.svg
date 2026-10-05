@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 388" width="760" height="388" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Experiment 1: peak resident memory (MiB), lower is better">
+<style>.bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.grid{stroke:#e6e5e0}.whisk{stroke:#0b0b0b;stroke-opacity:.6}@media (prefers-color-scheme: dark){.bg{fill:#1c1c1b}.ink{fill:#f2f1ed}.ink2{fill:#b5b3ad}.grid{stroke:#3a3936}.whisk{stroke:#f2f1ed}}</style>
+<rect class="bg" width="100%" height="100%"/>
+<text class="ink" x="12" y="20" font-size="14" font-weight="600">Experiment 1</text>
+<text class="ink2" x="12" y="37">peak resident memory (MiB), lower is better · bar = median, whisker = min–max</text>
+<line class="grid" x1="250" x2="250" y1="42" y2="364"/><text class="ink2" x="250" y="380" text-anchor="middle">0.0</text>
+<line class="grid" x1="355" x2="355" y1="42" y2="364"/><text class="ink2" x="355" y="380" text-anchor="middle">250</text>
+<line class="grid" x1="460" x2="460" y1="42" y2="364"/><text class="ink2" x="460" y="380" text-anchor="middle">500</text>
+<line class="grid" x1="565" x2="565" y1="42" y2="364"/><text class="ink2" x="565" y="380" text-anchor="middle">750</text>
+<line class="grid" x1="670" x2="670" y1="42" y2="364"/><text class="ink2" x="670" y="380" text-anchor="middle">1000</text>
+<text class="ink" x="242" y="62" text-anchor="end">go · goroutine · 1000</text>
+<rect x="250" y="50" width="2.793984375000008" height="17" rx="3" fill="#2a78d6"><title>6.65</title></rect>
+<line x1="252.662734375" x2="252.93671875" y1="58" y2="58" class="whisk"/>
+<text class="ink" x="258.93671875" y="62">6.65</text>
+<text class="ink" x="242" y="88" text-anchor="end">go · goroutine · 10000</text>
+<rect x="250" y="76" width="12.811640624999995" height="17" rx="3" fill="#2a78d6"><title>30.50</title></rect>
+<line x1="262.72796875" x2="262.8821875" y1="84" y2="84" class="whisk"/>
+<text class="ink" x="268.8821875" y="88">31</text>
+<text class="ink" x="242" y="114" text-anchor="end">go · goroutine · 100000</text>
+<rect x="250" y="102" width="112.77164062499997" height="17" rx="3" fill="#2a78d6"><title>268.50</title></rect>
+<line x1="361.97921875" x2="363.434453125" y1="110" y2="110" class="whisk"/>
+<text class="ink" x="369.434453125" y="114">269</text>
+<text class="ink" x="242" y="140" text-anchor="end">go · goroutine · 1000000</text>
+<rect x="250" y="128" width="358.0450781249999" height="17" rx="3" fill="#2a78d6"><title>852.49</title></rect>
+<line x1="584.288828125" x2="619.48515625" y1="136" y2="136" class="whisk"/>
+<text class="ink" x="625.48515625" y="140">852</text>
+<text class="ink" x="242" y="166" text-anchor="end">java · platform · 1000</text>
+<rect x="250" y="154" width="34.914140625000016" height="17" rx="3" fill="#eb6834"><title>83.13</title></rect>
+<line x1="284.914140625" x2="284.914140625" y1="162" y2="162" class="whisk"/>
+<text class="ink" x="290.914140625" y="166">83</text>
+<text class="ink" x="242" y="192" text-anchor="end">java · platform · 10000</text>
+<rect x="250" y="180" width="39.37007812500002" height="17" rx="3" fill="#eb6834"><title>93.74</title></rect>
+<line x1="289.370078125" x2="289.370078125" y1="188" y2="188" class="whisk"/>
+<text class="ink" x="295.370078125" y="192">94</text>
+<text class="ink" x="242" y="218" text-anchor="end">java · platform · 100000</text>
+<rect x="250" y="206" width="46.76273437499998" height="17" rx="3" fill="#eb6834"><title>111.34</title></rect>
+<line x1="296.762734375" x2="296.762734375" y1="214" y2="214" class="whisk"/>
+<text class="ink" x="302.762734375" y="218">111</text>
+<text class="ink" x="242" y="244" text-anchor="end">java · platform · 1000000</text>
+<rect x="250" y="232" width="145.95" height="17" rx="3" fill="#eb6834"><title>347.50</title></rect>
+<line x1="387.312109375" x2="400.01382812500003" y1="240" y2="240" class="whisk"/>
+<text class="ink" x="406.01382812500003" y="244">348</text>
+<text class="ink" x="242" y="270" text-anchor="end">java · virtual · 1000</text>
+<rect x="250" y="258" width="20.438906250000002" height="17" rx="3" fill="#eb6834"><title>48.66</title></rect>
+<line x1="270.43890625" x2="270.535703125" y1="266" y2="266" class="whisk"/>
+<text class="ink" x="276.535703125" y="270">49</text>
+<text class="ink" x="242" y="296" text-anchor="end">java · virtual · 10000</text>
+<rect x="250" y="284" width="30.656718749999982" height="17" rx="3" fill="#eb6834"><title>72.99</title></rect>
+<line x1="280.65671875" x2="280.65671875" y1="292" y2="292" class="whisk"/>
+<text class="ink" x="286.65671875" y="296">73</text>
+<text class="ink" x="242" y="322" text-anchor="end">java · virtual · 100000</text>
+<rect x="250" y="310" width="104.05007812500003" height="17" rx="3" fill="#eb6834"><title>247.74</title></rect>
+<line x1="336.28046875" x2="356.9425" y1="318" y2="318" class="whisk"/>
+<text class="ink" x="362.9425" y="322">248</text>
+<text class="ink" x="242" y="348" text-anchor="end">java · virtual · 1000000</text>
+<rect x="250" y="336" width="341.51250000000005" height="17" rx="3" fill="#eb6834"><title>813.13</title></rect>
+<line x1="591.5125" x2="591.5125" y1="344" y2="344" class="whisk"/>
+<text class="ink" x="597.5125" y="348">813</text>
+<rect x="610" y="10" width="10" height="10" fill="#2a78d6"/><text class="ink" x="624" y="19">Go</text><rect x="660" y="10" width="10" height="10" fill="#eb6834"/><text class="ink" x="674" y="19">Java</text></svg>

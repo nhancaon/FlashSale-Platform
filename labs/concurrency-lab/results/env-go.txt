@@ -1,0 +1,4 @@
+go version go1.26.8 linux/amd64
+GOMAXPROCS: runtime default, cgroup-aware since Go 1.25 (effective value: metrics.workers of experiment 2)
+GOGC=100
+cpus=2 mem=3g

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 258" width="760" height="258" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Experiment 4: ns per increment, lower is better">
+<style>.bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.grid{stroke:#e6e5e0}.whisk{stroke:#0b0b0b;stroke-opacity:.6}@media (prefers-color-scheme: dark){.bg{fill:#1c1c1b}.ink{fill:#f2f1ed}.ink2{fill:#b5b3ad}.grid{stroke:#3a3936}.whisk{stroke:#f2f1ed}}</style>
+<rect class="bg" width="100%" height="100%"/>
+<text class="ink" x="12" y="20" font-size="14" font-weight="600">Experiment 4</text>
+<text class="ink2" x="12" y="37">ns per increment, lower is better · bar = median, whisker = min–max</text>
+<line class="grid" x1="250" x2="250" y1="42" y2="234"/><text class="ink2" x="250" y="250" text-anchor="middle">0.0</text>
+<line class="grid" x1="355" x2="355" y1="42" y2="234"/><text class="ink2" x="355" y="250" text-anchor="middle">200</text>
+<line class="grid" x1="460" x2="460" y1="42" y2="234"/><text class="ink2" x="460" y="250" text-anchor="middle">400</text>
+<line class="grid" x1="565" x2="565" y1="42" y2="234"/><text class="ink2" x="565" y="250" text-anchor="middle">600</text>
+<line class="grid" x1="670" x2="670" y1="42" y2="234"/><text class="ink2" x="670" y="250" text-anchor="middle">800</text>
+<text class="ink" x="242" y="62" text-anchor="end">go · mutex · 100x100000</text>
+<rect x="250" y="50" width="11.588596057500013" height="17" rx="3" fill="#2a78d6"><title>22.07</title></rect>
+<line x1="261.1535663575" x2="263.419250635" y1="58" y2="58" class="whisk"/>
+<text class="ink" x="269.419250635" y="62">22</text>
+<text class="ink" x="242" y="88" text-anchor="end">go · atomic · 100x100000</text>
+<rect x="250" y="76" width="4.35297786000001" height="17" rx="3" fill="#2a78d6"><title>8.29</title></rect>
+<line x1="253.16642662" x2="255.7218155575" y1="84" y2="84" class="whisk"/>
+<text class="ink" x="261.7218155575" y="88">8.29</text>
+<text class="ink" x="242" y="114" text-anchor="end">go · channel · 100x100000</text>
+<rect x="250" y="102" width="23.511401287500007" height="17" rx="3" fill="#2a78d6"><title>44.78</title></rect>
+<line x1="270.599396125" x2="275.4069217675" y1="110" y2="110" class="whisk"/>
+<text class="ink" x="281.4069217675" y="114">45</text>
+<text class="ink" x="242" y="140" text-anchor="end">java · synchronized · 100x100000</text>
+<rect x="250" y="128" width="205.0207998825" height="17" rx="3" fill="#eb6834"><title>390.52</title></rect>
+<line x1="375.5569965475" x2="522.52389556" y1="136" y2="136" class="whisk"/>
+<text class="ink" x="528.52389556" y="140">391</text>
+<text class="ink" x="242" y="166" text-anchor="end">java · reentrantlock · 100x100000</text>
+<rect x="250" y="154" width="13.409975302500015" height="17" rx="3" fill="#eb6834"><title>25.54</title></rect>
+<line x1="263.274535015" x2="265.103182255" y1="162" y2="162" class="whisk"/>
+<text class="ink" x="271.103182255" y="166">26</text>
+<text class="ink" x="242" y="192" text-anchor="end">java · atomiclong · 100x100000</text>
+<rect x="250" y="180" width="77.97565902000002" height="17" rx="3" fill="#eb6834"><title>148.53</title></rect>
+<line x1="297.821436985" x2="328.5975366925" y1="188" y2="188" class="whisk"/>
+<text class="ink" x="334.5975366925" y="192">149</text>
+<text class="ink" x="242" y="218" text-anchor="end">java · longadder · 100x100000</text>
+<rect x="250" y="206" width="77.84942560500002" height="17" rx="3" fill="#eb6834"><title>148.28</title></rect>
+<line x1="307.63595005" x2="344.33979205" y1="214" y2="214" class="whisk"/>
+<text class="ink" x="350.33979205" y="218">148</text>
+<rect x="610" y="10" width="10" height="10" fill="#2a78d6"/><text class="ink" x="624" y="19">Go</text><rect x="660" y="10" width="10" height="10" fill="#eb6834"/><text class="ink" x="674" y="19">Java</text></svg>

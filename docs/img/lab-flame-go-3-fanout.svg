@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" font-family="system-ui, sans-serif" font-size="11">
+<rect width="100%" height="100%" fill="#fcfcfb"/>
+<text x="10" y="18" font-size="14" fill="#0b0b0b">CPU flame graph: go-3-fanout (width = share of samples)</text>
+<g><title>all (100.0%)</title><rect x="10.0" y="359" width="1179.5" height="16" rx="2" fill="hsl(43, 83%, 61%)"/><text x="13.0" y="371" fill="#1a1a1a">all</text></g>
+<g><title>main.exp3.func1 (50.0%)</title><rect x="10.0" y="342" width="589.5" height="16" rx="2" fill="hsl(12, 72%, 70%)"/><text x="13.0" y="354" fill="#1a1a1a">main.exp3.func1</text></g>
+<g><title>runtime.selectgo (28.6%)</title><rect x="10.0" y="325" width="336.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="13.0" y="337" fill="#1a1a1a">runtime.selectgo</text></g>
+<g><title>runtime.acquireSudog (7.1%)</title><rect x="10.0" y="308" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="13.0" y="320" fill="#1a1a1a">runtime.acq…</text></g>
+<g><title>runtime.newobject (7.1%)</title><rect x="10.0" y="291" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="13.0" y="303" fill="#1a1a1a">runtime.new…</text></g>
+<g><title>runtime.mallocgc (7.1%)</title><rect x="10.0" y="274" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="13.0" y="286" fill="#1a1a1a">runtime.mal…</text></g>
+<g><title>runtime.mallocgcSmallScanNoHeader (7.1%)</title><rect x="10.0" y="257" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="13.0" y="269" fill="#1a1a1a">runtime.mal…</text></g>
+<g><title>runtime.(*mcache).nextFree (3.6%)</title><rect x="10.0" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="13.0" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*mcache).refill (3.6%)</title><rect x="10.0" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="13.0" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*mcentral).cacheSpan (3.6%)</title><rect x="10.0" y="206" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="13.0" y="218" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*sweepLocked).sweep (3.6%)</title><rect x="10.0" y="189" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="13.0" y="201" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*mspan).moveInlineMarks (3.6%)</title><rect x="10.0" y="172" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="13.0" y="184" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcTrigger.test (3.6%)</title><rect x="52.1" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="55.1" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gopark (3.6%)</title><rect x="94.3" y="308" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="97.3" y="320" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.releaseSudog (7.1%)</title><rect x="136.4" y="308" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="139.4" y="320" fill="#1a1a1a">runtime.rel…</text></g>
+<g><title>runtime.sellock (10.7%)</title><rect x="220.7" y="308" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="223.7" y="320" fill="#1a1a1a">runtime.sellock</text></g>
+<g><title>runtime.lock (inline) (10.7%)</title><rect x="220.7" y="291" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 73%)"/><text x="223.7" y="303" fill="#1a1a1a">runtime.lock (inli…</text></g>
+<g><title>runtime.lockWithRank (inline) (10.7%)</title><rect x="220.7" y="274" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="223.7" y="286" fill="#1a1a1a">runtime.lockWithRa…</text></g>
+<g><title>runtime.lock2 (10.7%)</title><rect x="220.7" y="257" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="223.7" y="269" fill="#1a1a1a">runtime.lock2</text></g>
+<g><title>runtime.procyield (inline) (7.1%)</title><rect x="220.7" y="240" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="223.7" y="252" fill="#1a1a1a">runtime.pro…</text></g>
+<g><title>runtime.procyieldAsm (7.1%)</title><rect x="220.7" y="223" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="223.7" y="235" fill="#1a1a1a">runtime.pro…</text></g>
+<g><title>sync.(*WaitGroup).Done (3.6%)</title><rect x="347.1" y="325" width="41.6" height="16" rx="2" fill="hsl(38, 78%, 62%)"/><text x="350.1" y="337" fill="#1a1a1a">sync…</text></g>
+<g><title>sync.(*WaitGroup).Add (3.6%)</title><rect x="347.1" y="308" width="41.6" height="16" rx="2" fill="hsl(49, 89%, 61%)"/><text x="350.1" y="320" fill="#1a1a1a">sync…</text></g>
+<g><title>sync/atomic.(*Uint64).Add (inline) (3.6%)</title><rect x="347.1" y="291" width="41.6" height="16" rx="2" fill="hsl(15, 75%, 69%)"/><text x="350.1" y="303" fill="#1a1a1a">sync…</text></g>
+<g><title>time.After (inline) (14.3%)</title><rect x="389.3" y="325" width="168.1" height="16" rx="2" fill="hsl(47, 87%, 59%)"/><text x="392.3" y="337" fill="#1a1a1a">time.After (inline)</text></g>
+<g><title>time.NewTimer (14.3%)</title><rect x="389.3" y="308" width="168.1" height="16" rx="2" fill="hsl(24, 84%, 60%)"/><text x="392.3" y="320" fill="#1a1a1a">time.NewTimer</text></g>
+<g><title>runtime.makechan (10.7%)</title><rect x="389.3" y="291" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="392.3" y="303" fill="#1a1a1a">runtime.makechan</text></g>
+<g><title>runtime.newobject (10.7%)</title><rect x="389.3" y="274" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="392.3" y="286" fill="#1a1a1a">runtime.newobject</text></g>
+<g><title>runtime.mallocgc (10.7%)</title><rect x="389.3" y="257" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="392.3" y="269" fill="#1a1a1a">runtime.mallocgc</text></g>
+<g><title>runtime.deductAssistCredit (7.1%)</title><rect x="389.3" y="240" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="392.3" y="252" fill="#1a1a1a">runtime.ded…</text></g>
+<g><title>runtime.gcAssistAlloc (7.1%)</title><rect x="389.3" y="223" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="392.3" y="235" fill="#1a1a1a">runtime.gcA…</text></g>
+<g><title>runtime.systemstack (7.1%)</title><rect x="389.3" y="206" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="392.3" y="218" fill="#1a1a1a">runtime.sys…</text></g>
+<g><title>runtime.gcAssistAlloc.func2 (7.1%)</title><rect x="389.3" y="189" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="392.3" y="201" fill="#1a1a1a">runtime.gcA…</text></g>
+<g><title>runtime.gcAssistAlloc1 (7.1%)</title><rect x="389.3" y="172" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="392.3" y="184" fill="#1a1a1a">runtime.gcA…</text></g>
+<g><title>runtime.gcDrainN (7.1%)</title><rect x="389.3" y="155" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="392.3" y="167" fill="#1a1a1a">runtime.gcD…</text></g>
+<g><title>runtime.markroot (3.6%)</title><rect x="389.3" y="138" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="392.3" y="150" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.scanSpan (3.6%)</title><rect x="431.4" y="138" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="434.4" y="150" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.scanObjectsSmall (3.6%)</title><rect x="431.4" y="121" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="434.4" y="133" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.tryDeferToSpanScan (3.6%)</title><rect x="431.4" y="104" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="434.4" y="116" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.spanClass.sizeclass (inline) (3.6%)</title><rect x="431.4" y="87" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="434.4" y="99" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.mallocgcSmallScanNoHeader (3.6%)</title><rect x="473.6" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="476.6" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.nextFreeFast (inline) (3.6%)</title><rect x="473.6" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="476.6" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>time.newTimer (3.6%)</title><rect x="515.7" y="291" width="41.6" height="16" rx="2" fill="hsl(16, 76%, 64%)"/><text x="518.7" y="303" fill="#1a1a1a">time…</text></g>
+<g><title>runtime.(*timer).modify (3.6%)</title><rect x="515.7" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="518.7" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*timer).unlock (inline) (3.6%)</title><rect x="515.7" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="518.7" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcBgMarkWorker (3.6%)</title><rect x="600.0" y="342" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="603.0" y="354" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.systemstack (3.6%)</title><rect x="600.0" y="325" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="603.0" y="337" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcBgMarkWorker.func2 (3.6%)</title><rect x="600.0" y="308" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="603.0" y="320" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcDrainMarkWorkerIdle (inline) (3.6%)</title><rect x="600.0" y="291" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="603.0" y="303" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcDrain (3.6%)</title><rect x="600.0" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="603.0" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.scanSpan (3.6%)</title><rect x="600.0" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="603.0" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.scanObjectsSmall (3.6%)</title><rect x="600.0" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="603.0" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.main (14.3%)</title><rect x="642.1" y="342" width="168.1" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="645.1" y="354" fill="#1a1a1a">runtime.main</text></g>
+<g><title>main.main (14.3%)</title><rect x="642.1" y="325" width="168.1" height="16" rx="2" fill="hsl(40, 80%, 68%)"/><text x="645.1" y="337" fill="#1a1a1a">main.main</text></g>
+<g><title>main.measure (14.3%)</title><rect x="642.1" y="308" width="168.1" height="16" rx="2" fill="hsl(19, 79%, 71%)"/><text x="645.1" y="320" fill="#1a1a1a">main.measure</text></g>
+<g><title>main.cpuTime (3.6%)</title><rect x="642.1" y="291" width="41.6" height="16" rx="2" fill="hsl(34, 74%, 70%)"/><text x="645.1" y="303" fill="#1a1a1a">main…</text></g>
+<g><title>syscall.Getrusage (3.6%)</title><rect x="642.1" y="274" width="41.6" height="16" rx="2" fill="hsl(44, 84%, 62%)"/><text x="645.1" y="286" fill="#1a1a1a">sysc…</text></g>
+<g><title>syscall.RawSyscall (3.6%)</title><rect x="642.1" y="257" width="41.6" height="16" rx="2" fill="hsl(16, 76%, 58%)"/><text x="645.1" y="269" fill="#1a1a1a">sysc…</text></g>
+<g><title>syscall.RawSyscall6 (3.6%)</title><rect x="642.1" y="240" width="41.6" height="16" rx="2" fill="hsl(18, 78%, 64%)"/><text x="645.1" y="252" fill="#1a1a1a">sysc…</text></g>
+<g><title>internal/runtime/syscall/linux.Syscall6 (3.6%)</title><rect x="642.1" y="223" width="41.6" height="16" rx="2" fill="hsl(20, 80%, 58%)"/><text x="645.1" y="235" fill="#1a1a1a">inte…</text></g>
+<g><title>main.main.func3 (3.6%)</title><rect x="684.3" y="291" width="41.6" height="16" rx="2" fill="hsl(33, 73%, 69%)"/><text x="687.3" y="303" fill="#1a1a1a">main…</text></g>
+<g><title>main.exp3 (3.6%)</title><rect x="684.3" y="274" width="41.6" height="16" rx="2" fill="hsl(13, 73%, 63%)"/><text x="687.3" y="286" fill="#1a1a1a">main…</text></g>
+<g><title>runtime.newproc (3.6%)</title><rect x="684.3" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="687.3" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.systemstack (3.6%)</title><rect x="684.3" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="687.3" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.newproc.func1 (3.6%)</title><rect x="684.3" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 73%)"/><text x="687.3" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.newproc1 (3.6%)</title><rect x="684.3" y="206" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="687.3" y="218" fill="#1a1a1a">runt…</text></g>
+<g><title>main.peakRSSMB (3.6%)</title><rect x="726.4" y="291" width="41.6" height="16" rx="2" fill="hsl(45, 85%, 65%)"/><text x="729.4" y="303" fill="#1a1a1a">main…</text></g>
+<g><title>bufio.(*Scanner).Scan (3.6%)</title><rect x="726.4" y="274" width="41.6" height="16" rx="2" fill="hsl(11, 71%, 65%)"/><text x="729.4" y="286" fill="#1a1a1a">bufi…</text></g>
+<g><title>os.(*File).Read (3.6%)</title><rect x="726.4" y="257" width="41.6" height="16" rx="2" fill="hsl(29, 89%, 69%)"/><text x="729.4" y="269" fill="#1a1a1a">os.(…</text></g>
+<g><title>os.(*File).read (inline) (3.6%)</title><rect x="726.4" y="240" width="41.6" height="16" rx="2" fill="hsl(23, 83%, 67%)"/><text x="729.4" y="252" fill="#1a1a1a">os.(…</text></g>
+<g><title>internal/poll.(*FD).Read (3.6%)</title><rect x="726.4" y="223" width="41.6" height="16" rx="2" fill="hsl(10, 70%, 58%)"/><text x="729.4" y="235" fill="#1a1a1a">inte…</text></g>
+<g><title>internal/poll.ignoringEINTRIO (inline) (3.6%)</title><rect x="726.4" y="206" width="41.6" height="16" rx="2" fill="hsl(24, 84%, 64%)"/><text x="729.4" y="218" fill="#1a1a1a">inte…</text></g>
+<g><title>syscall.Read (inline) (3.6%)</title><rect x="726.4" y="189" width="41.6" height="16" rx="2" fill="hsl(33, 73%, 71%)"/><text x="729.4" y="201" fill="#1a1a1a">sysc…</text></g>
+<g><title>syscall.read (3.6%)</title><rect x="726.4" y="172" width="41.6" height="16" rx="2" fill="hsl(35, 75%, 71%)"/><text x="729.4" y="184" fill="#1a1a1a">sysc…</text></g>
+<g><title>syscall.Syscall (3.6%)</title><rect x="726.4" y="155" width="41.6" height="16" rx="2" fill="hsl(34, 74%, 68%)"/><text x="729.4" y="167" fill="#1a1a1a">sysc…</text></g>
+<g><title>syscall.RawSyscall6 (3.6%)</title><rect x="726.4" y="138" width="41.6" height="16" rx="2" fill="hsl(18, 78%, 64%)"/><text x="729.4" y="150" fill="#1a1a1a">sysc…</text></g>
+<g><title>internal/runtime/syscall/linux.Syscall6 (3.6%)</title><rect x="726.4" y="121" width="41.6" height="16" rx="2" fill="hsl(20, 80%, 58%)"/><text x="729.4" y="133" fill="#1a1a1a">inte…</text></g>
+<g><title>runtime.GC (3.6%)</title><rect x="768.6" y="291" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="771.6" y="303" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.gcStart (3.6%)</title><rect x="768.6" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="771.6" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.clearpools (3.6%)</title><rect x="768.6" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 70%)"/><text x="771.6" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.mcall (32.1%)</title><rect x="810.7" y="342" width="378.8" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="813.7" y="354" fill="#1a1a1a">runtime.mcall</text></g>
+<g><title>runtime.goexit0 (25.0%)</title><rect x="810.7" y="325" width="294.5" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="813.7" y="337" fill="#1a1a1a">runtime.goexit0</text></g>
+<g><title>runtime.gdestroy (10.7%)</title><rect x="810.7" y="308" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="813.7" y="320" fill="#1a1a1a">runtime.gdestroy</text></g>
+<g><title>runtime.gfput (10.7%)</title><rect x="810.7" y="291" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="813.7" y="303" fill="#1a1a1a">runtime.gfput</text></g>
+<g><title>runtime.(*gList).pop (inline) (7.1%)</title><rect x="810.7" y="274" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="813.7" y="286" fill="#1a1a1a">runtime.(*g…</text></g>
+<g><title>runtime.stackfree (3.6%)</title><rect x="895.0" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="898.0" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.stackcacherelease (3.6%)</title><rect x="895.0" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="898.0" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.stackpoolfree (3.6%)</title><rect x="895.0" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="898.0" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*mheap).freeManual (3.6%)</title><rect x="895.0" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="898.0" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*mheap).freeSpanLocked (3.6%)</title><rect x="895.0" y="206" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="898.0" y="218" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*pageAlloc).free (3.6%)</title><rect x="895.0" y="189" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="898.0" y="201" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*scavengeIndex).free (3.6%)</title><rect x="895.0" y="172" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="898.0" y="184" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.schedule (14.3%)</title><rect x="937.1" y="308" width="168.1" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="940.1" y="320" fill="#1a1a1a">runtime.schedule</text></g>
+<g><title>runtime.findRunnable (10.7%)</title><rect x="937.1" y="291" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="940.1" y="303" fill="#1a1a1a">runtime.findRunnab…</text></g>
+<g><title>runtime.(*timers).check (10.7%)</title><rect x="937.1" y="274" width="125.9" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="940.1" y="286" fill="#1a1a1a">runtime.(*timers).…</text></g>
+<g><title>runtime.(*timers).run (7.1%)</title><rect x="937.1" y="257" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="940.1" y="269" fill="#1a1a1a">runtime.(*t…</text></g>
+<g><title>runtime.(*timer).unlockAndRun (7.1%)</title><rect x="937.1" y="240" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="940.1" y="252" fill="#1a1a1a">runtime.(*t…</text></g>
+<g><title>time.sendTime (7.1%)</title><rect x="937.1" y="223" width="83.8" height="16" rx="2" fill="hsl(16, 76%, 64%)"/><text x="940.1" y="235" fill="#1a1a1a">time.sendTi…</text></g>
+<g><title>runtime.selectnbsend (7.1%)</title><rect x="937.1" y="206" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="940.1" y="218" fill="#1a1a1a">runtime.sel…</text></g>
+<g><title>runtime.chansend (7.1%)</title><rect x="937.1" y="189" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 74%)"/><text x="940.1" y="201" fill="#1a1a1a">runtime.cha…</text></g>
+<g><title>runtime.(*waitq).dequeue (inline) (3.6%)</title><rect x="937.1" y="172" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="940.1" y="184" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.send (3.6%)</title><rect x="979.3" y="172" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="982.3" y="184" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.goready (inline) (3.6%)</title><rect x="979.3" y="155" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="982.3" y="167" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.send.goready.func1 (3.6%)</title><rect x="979.3" y="138" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="982.3" y="150" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.ready (3.6%)</title><rect x="979.3" y="121" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="982.3" y="133" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.wakep (3.6%)</title><rect x="979.3" y="104" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="982.3" y="116" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.startm (3.6%)</title><rect x="979.3" y="87" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="982.3" y="99" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.notewakeup (3.6%)</title><rect x="979.3" y="70" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 73%)"/><text x="982.3" y="82" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futexwakeup (3.6%)</title><rect x="979.3" y="53" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="982.3" y="65" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futex (3.6%)</title><rect x="979.3" y="36" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="982.3" y="48" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.(*timers).wakeTime (inline) (3.6%)</title><rect x="1021.4" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="1024.4" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.resetspinning (3.6%)</title><rect x="1063.6" y="291" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 73%)"/><text x="1066.6" y="303" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.wakep (3.6%)</title><rect x="1063.6" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 72%)"/><text x="1066.6" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.startm (3.6%)</title><rect x="1063.6" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 79%)"/><text x="1066.6" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.notewakeup (3.6%)</title><rect x="1063.6" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 73%)"/><text x="1066.6" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futexwakeup (3.6%)</title><rect x="1063.6" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="1066.6" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futex (3.6%)</title><rect x="1063.6" y="206" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="1066.6" y="218" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.park_m (7.1%)</title><rect x="1105.7" y="325" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 76%)"/><text x="1108.7" y="337" fill="#1a1a1a">runtime.par…</text></g>
+<g><title>runtime.schedule (7.1%)</title><rect x="1105.7" y="308" width="83.8" height="16" rx="2" fill="hsl(30, 12%, 71%)"/><text x="1108.7" y="320" fill="#1a1a1a">runtime.sch…</text></g>
+<g><title>runtime.execute (3.6%)</title><rect x="1105.7" y="291" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 77%)"/><text x="1108.7" y="303" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.casgstatus (3.6%)</title><rect x="1105.7" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="1108.7" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.findRunnable (3.6%)</title><rect x="1147.9" y="291" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 78%)"/><text x="1150.9" y="303" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.stopm (3.6%)</title><rect x="1147.9" y="274" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="1150.9" y="286" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.mPark (inline) (3.6%)</title><rect x="1147.9" y="257" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="1150.9" y="269" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.notesleep (3.6%)</title><rect x="1147.9" y="240" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 81%)"/><text x="1150.9" y="252" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futexsleep (3.6%)</title><rect x="1147.9" y="223" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 75%)"/><text x="1150.9" y="235" fill="#1a1a1a">runt…</text></g>
+<g><title>runtime.futex (3.6%)</title><rect x="1147.9" y="206" width="41.6" height="16" rx="2" fill="hsl(30, 12%, 80%)"/><text x="1150.9" y="218" fill="#1a1a1a">runt…</text></g>
+</svg>

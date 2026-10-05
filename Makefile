@@ -11,7 +11,7 @@ GO_DOCKER = MSYS_NO_PATHCONV=1 docker run --rm --network flashsale_default -v "$
 GO_SERVICES := ratelimiter-go inventory-go outbox-worker notification gateway
 JAVA_SERVICES := ratelimiter-java inventory-java order
 
-.PHONY: lab-up lab-images lab-site lab-check lab-rolling lab-down lab-destroy lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
+.PHONY: lab-go lab-java lab-report lab-up lab-images lab-site lab-check lab-rolling lab-down lab-destroy lint security-scan loadtest-smoke db-tune trace-check dashboard env-sync e2e-gateway up-apps down-apps e2e e2e-outbox chaos help up down logs ps db-migrate db-shell db-reset test test-go test-go-race test-java check-lua contract-test
 
 help: ## Liệt kê lệnh
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
@@ -75,6 +75,16 @@ security-scan: ## Như CI: Trivy trên dependency Go, cấu hình, và image đ�
 
 loadtest-smoke: ## k6 smoke qua gateway + reconcile (cần make up-apps với RL_IP_LIMIT lớn, xem loadtest.yml)
 	bash loadtest/smoke.sh
+
+# ---- Concurrency lab (Phase 2b): cùng 10 thí nghiệm Go/Java trong container --cpus 2 --memory 3g ----
+lab-go: ## Chạy mọi thí nghiệm Go -> labs/concurrency-lab/results/go.jsonl (~1 phút)
+	bash labs/concurrency-lab/run.sh go
+
+lab-java: ## Chạy mọi thí nghiệm Java -> results/java.jsonl (~20 phút, 1M platform thread mất ~15 phút)
+	bash labs/concurrency-lab/run.sh java
+
+lab-report: ## Gom kết quả -> docs/concurrency-comparison.md + docs/img/lab-*.svg (flame graph, biểu đồ)
+	node labs/concurrency-lab/report.mjs
 
 # ---- Ansible lab (Phase 8): 3 container "VM" + controller; cần ~5 GB RAM cho Docker, nên make down trước ----
 lab-up: env-sync ## Dựng 3 node lab (systemd + SSH) và controller Ansible

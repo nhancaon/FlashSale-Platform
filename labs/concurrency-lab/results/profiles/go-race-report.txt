@@ -1,0 +1,66 @@
+==================
+WARNING: DATA RACE
+Read at 0x00c0000961d8 by goroutine 15:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount.func1()
+      /src/race/counter.go:15 +0x9e
+
+Previous write at 0x00c0000961d8 by goroutine 10:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount.func1()
+      /src/race/counter.go:15 +0xb0
+
+Goroutine 15 (running) created at:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount()
+      /src/race/counter.go:12 +0x84
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.TestRacy()
+      /src/race/counter_test.go:14 +0x9d
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /usr/local/go/src/testing/testing.go:2101 +0x38
+
+Goroutine 10 (finished) created at:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount()
+      /src/race/counter.go:12 +0x84
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.TestRacy()
+      /src/race/counter_test.go:14 +0x9d
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /usr/local/go/src/testing/testing.go:2101 +0x38
+==================
+==================
+WARNING: DATA RACE
+Write at 0x00c0000961d8 by goroutine 15:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount.func1()
+      /src/race/counter.go:15 +0xb0
+
+Previous write at 0x00c0000961d8 by goroutine 10:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount.func1()
+      /src/race/counter.go:15 +0xb0
+
+Goroutine 15 (running) created at:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount()
+      /src/race/counter.go:12 +0x84
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.TestRacy()
+      /src/race/counter_test.go:14 +0x9d
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /usr/local/go/src/testing/testing.go:2101 +0x38
+
+Goroutine 10 (finished) created at:
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.RacyCount()
+      /src/race/counter.go:12 +0x84
+  github.com/nhancaon/flashsale/labs/concurrency-lab/go/race.TestRacy()
+      /src/race/counter_test.go:14 +0x9d
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /usr/local/go/src/testing/testing.go:2101 +0x38
+==================
+--- FAIL: TestRacy (0.00s)
+    counter_test.go:15: racy count: 69396 of 80000 (lost updates: 10604)
+    testing.go:1712: race detected during execution of test
+FAIL
+FAIL	github.com/nhancaon/flashsale/labs/concurrency-lab/go/race	0.010s
+FAIL

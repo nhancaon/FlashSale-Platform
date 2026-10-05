@@ -9,6 +9,7 @@ Hệ thống flash sale (bán hàng giới hạn, tải đột biến) dùng đ�
 | 0 | Khung repo, Compose, migration | Xong, đã chạy thật |
 | 1 | Rate limiter (Go + Java) | Xong: test pass, `-race` sạch; benchmark sơ bộ chưa đáng tin (xem `loadtest/results/phase1-ratelimiter/README.md`) |
 | 2 | Inventory (Go + Java) | Xong: cùng contract test pass cho 3 chiến lược x 2 ngôn ngữ, 0 oversell; bảng so sánh ở `loadtest/results/phase2-inventory/README.md` |
+| 2b | Concurrency lab Go vs Java (10 thí nghiệm) | Xong: `make lab-go`, `make lab-java`, `make lab-report` → [docs/concurrency-comparison.md](docs/concurrency-comparison.md) (bảng, biểu đồ, flame graph, so sánh code) |
 | 3 | Order service (saga, idempotency, outbox, Resilience4j) | Xong: 19 test, `make e2e` và `make chaos` qua với cả inventory-go và inventory-java |
 | 4 | Outbox worker + Notification (Go) | Xong: 3 worker, giết 1 giữa chừng không mất event, mỗi event 1 thông báo (`make e2e-outbox`) |
 | 5 | Gateway (Go): JWT, rate limit, circuit breaker, proxy | Xong: chuỗi middleware có test, `make e2e-gateway` qua |
@@ -197,3 +198,11 @@ ansible-vault view group_vars/all/vault.yml`). Grafana của lab: http://localho
 Secret nằm trong `ansible/group_vars/all/vault.yml` (Ansible Vault, mật khẩu từ `FLASHSALE_VAULT_PASSWORD`).
 Rolling update đo được: trước khi có PodDisruptionBudget và 2 CoreDNS, mỗi lần drain mất cả nền tảng ~18 s; sau khi sửa
 còn tối đa 3 s trên chính node đang restart (load balancer có health check sẽ bỏ qua node đó).
+
+## Concurrency lab (Phase 2b)
+
+Mười thí nghiệm giống hệt nhau viết bằng Go và Java 25 (goroutine vs platform/virtual thread, worker pool, fan-out I/O,
+bộ đếm dùng chung, race detector, hàng đợi có giới hạn, huỷ task, deadlock/leak, pipeline, rate limiter), chạy trong
+container cùng giới hạn 2 CPU / 3 GiB: `make lab-go`, `make lab-java`, `make lab-report`. Chi tiết và cách chạy riêng
+từng thí nghiệm: [labs/concurrency-lab/README.md](labs/concurrency-lab/README.md). Kết quả trung thực, có cả chỗ Java
+thắng (CPU-bound, stream, tự phát hiện deadlock): [docs/concurrency-comparison.md](docs/concurrency-comparison.md).

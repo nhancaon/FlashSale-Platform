@@ -32,3 +32,8 @@ loadtest/results/raw/
 loadtest/results/smoke/
 deploy/lab/.ssh/
 deploy/lab/images/
+labs/concurrency-lab/results/profiles/*.jfr
+labs/concurrency-lab/results/profiles/*.pprof
+labs/concurrency-lab/results/profiles/*.samples.txt
+labs/concurrency-lab/results/profiles/*.traces.txt
+labs/concurrency-lab/java/target/

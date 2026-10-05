@@ -1,0 +1,5 @@
+openjdk version "25.0.4.1" 2026-08-18 LTS
+OpenJDK Runtime Environment Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS, mixed mode, sharing)
+flags: --enable-preview, default GC UseG1GC (JVM ergonomics for 2 CPUs, 3 GiB)
+cpus=2 mem=3g

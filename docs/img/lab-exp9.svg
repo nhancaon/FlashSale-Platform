@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 180" width="760" height="180" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Experiment 9: lines per second, higher is better">
+<style>.bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.grid{stroke:#e6e5e0}.whisk{stroke:#0b0b0b;stroke-opacity:.6}@media (prefers-color-scheme: dark){.bg{fill:#1c1c1b}.ink{fill:#f2f1ed}.ink2{fill:#b5b3ad}.grid{stroke:#3a3936}.whisk{stroke:#f2f1ed}}</style>
+<rect class="bg" width="100%" height="100%"/>
+<text class="ink" x="12" y="20" font-size="14" font-weight="600">Experiment 9</text>
+<text class="ink2" x="12" y="37">lines per second, higher is better · bar = median, whisker = min–max</text>
+<line class="grid" x1="250" x2="250" y1="42" y2="156"/><text class="ink2" x="250" y="172" text-anchor="middle">0.0</text>
+<line class="grid" x1="355" x2="355" y1="42" y2="156"/><text class="ink2" x="355" y="172" text-anchor="middle">10,000,000</text>
+<line class="grid" x1="460" x2="460" y1="42" y2="156"/><text class="ink2" x="460" y="172" text-anchor="middle">20,000,000</text>
+<line class="grid" x1="565" x2="565" y1="42" y2="156"/><text class="ink2" x="565" y="172" text-anchor="middle">30,000,000</text>
+<line class="grid" x1="670" x2="670" y1="42" y2="156"/><text class="ink2" x="670" y="172" text-anchor="middle">40,000,000</text>
+<text class="ink" x="242" y="62" text-anchor="end">go · channel-pipeline · 1000000</text>
+<rect x="250" y="50" width="75.39095595732152" height="17" rx="3" fill="#2a78d6"><title>7,180,091</title></rect>
+<line x1="320.79526683073186" x2="327.5485786453371" y1="58" y2="58" class="whisk"/>
+<text class="ink" x="333.5485786453371" y="62">7,180,091</text>
+<text class="ink" x="242" y="88" text-anchor="end">java · stream · 1000000</text>
+<rect x="250" y="76" width="149.09454668804142" height="17" rx="3" fill="#eb6834"><title>14,199,481</title></rect>
+<line x1="329.2954156752537" x2="411.03824207342166" y1="84" y2="84" class="whisk"/>
+<text class="ink" x="417.03824207342166" y="88">14,199,481</text>
+<text class="ink" x="242" y="114" text-anchor="end">java · parallel-stream · 1000000</text>
+<rect x="250" y="102" width="243.0155086248634" height="17" rx="3" fill="#eb6834"><title>23,144,334</title></rect>
+<line x1="354.9187026940305" x2="509.7435238023523" y1="110" y2="110" class="whisk"/>
+<text class="ink" x="515.7435238023522" y="114">23,144,334</text>
+<text class="ink" x="242" y="140" text-anchor="end">java · queue-virtual · 1000000</text>
+<rect x="250" y="128" width="16.77958375691992" height="17" rx="3" fill="#eb6834"><title>1,598,056</title></rect>
+<line x1="266.05327154322094" x2="269.62011598695034" y1="136" y2="136" class="whisk"/>
+<text class="ink" x="275.62011598695034" y="140">1,598,056</text>
+<rect x="610" y="10" width="10" height="10" fill="#2a78d6"/><text class="ink" x="624" y="19">Go</text><rect x="660" y="10" width="10" height="10" fill="#eb6834"/><text class="ink" x="674" y="19">Java</text></svg>

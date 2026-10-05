@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 154" width="760" height="154" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Experiment 3: p99 scheduling overhead (ms), lower is better">
+<style>.bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.grid{stroke:#e6e5e0}.whisk{stroke:#0b0b0b;stroke-opacity:.6}@media (prefers-color-scheme: dark){.bg{fill:#1c1c1b}.ink{fill:#f2f1ed}.ink2{fill:#b5b3ad}.grid{stroke:#3a3936}.whisk{stroke:#f2f1ed}}</style>
+<rect class="bg" width="100%" height="100%"/>
+<text class="ink" x="12" y="20" font-size="14" font-weight="600">Experiment 3</text>
+<text class="ink2" x="12" y="37">p99 scheduling overhead (ms), lower is better · bar = median, whisker = min–max</text>
+<line class="grid" x1="250" x2="250" y1="42" y2="130"/><text class="ink2" x="250" y="146" text-anchor="middle">0.0</text>
+<line class="grid" x1="355" x2="355" y1="42" y2="130"/><text class="ink2" x="355" y="146" text-anchor="middle">5.0</text>
+<line class="grid" x1="460" x2="460" y1="42" y2="130"/><text class="ink2" x="460" y="146" text-anchor="middle">10</text>
+<line class="grid" x1="565" x2="565" y1="42" y2="130"/><text class="ink2" x="565" y="146" text-anchor="middle">15</text>
+<line class="grid" x1="670" x2="670" y1="42" y2="130"/><text class="ink2" x="670" y="146" text-anchor="middle">20</text>
+<text class="ink" x="242" y="62" text-anchor="end">go · goroutine-waitgroup · 10000</text>
+<rect x="250" y="50" width="228.22800000000007" height="17" rx="3" fill="#2a78d6"><title>10.87</title></rect>
+<line x1="472.11699999999996" x2="544.441" y1="58" y2="58" class="whisk"/>
+<text class="ink" x="550.441" y="62">11</text>
+<text class="ink" x="242" y="88" text-anchor="end">java · virtual · 10000</text>
+<rect x="250" y="76" width="190.37358900000004" height="17" rx="3" fill="#eb6834"><title>9.07</title></rect>
+<line x1="373.95245799999987" x2="536.8012420000002" y1="84" y2="84" class="whisk"/>
+<text class="ink" x="542.8012420000002" y="88">9.07</text>
+<text class="ink" x="242" y="114" text-anchor="end">java · completablefuture · 10000</text>
+<rect x="250" y="102" width="48.41793599999971" height="17" rx="3" fill="#eb6834"><title>2.31</title></rect>
+<line x1="290.68613499999987" x2="318.223519" y1="110" y2="110" class="whisk"/>
+<text class="ink" x="324.223519" y="114">2.31</text>
+<rect x="610" y="10" width="10" height="10" fill="#2a78d6"/><text class="ink" x="624" y="19">Go</text><rect x="660" y="10" width="10" height="10" fill="#eb6834"/><text class="ink" x="674" y="19">Java</text></svg>

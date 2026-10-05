@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 154" width="760" height="154" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Experiment 2: jobs per second, higher is better">
+<style>.bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.grid{stroke:#e6e5e0}.whisk{stroke:#0b0b0b;stroke-opacity:.6}@media (prefers-color-scheme: dark){.bg{fill:#1c1c1b}.ink{fill:#f2f1ed}.ink2{fill:#b5b3ad}.grid{stroke:#3a3936}.whisk{stroke:#f2f1ed}}</style>
+<rect class="bg" width="100%" height="100%"/>
+<text class="ink" x="12" y="20" font-size="14" font-weight="600">Experiment 2</text>
+<text class="ink2" x="12" y="37">jobs per second, higher is better · bar = median, whisker = min–max</text>
+<line class="grid" x1="250" x2="250" y1="42" y2="130"/><text class="ink2" x="250" y="146" text-anchor="middle">0.0</text>
+<line class="grid" x1="355" x2="355" y1="42" y2="130"/><text class="ink2" x="355" y="146" text-anchor="middle">5000</text>
+<line class="grid" x1="460" x2="460" y1="42" y2="130"/><text class="ink2" x="460" y="146" text-anchor="middle">10,000</text>
+<line class="grid" x1="565" x2="565" y1="42" y2="130"/><text class="ink2" x="565" y="146" text-anchor="middle">15,000</text>
+<line class="grid" x1="670" x2="670" y1="42" y2="130"/><text class="ink2" x="670" y="146" text-anchor="middle">20,000</text>
+<text class="ink" x="242" y="62" text-anchor="end">go · goroutine-channel-pool · 5000</text>
+<rect x="250" y="50" width="293.715366430186" height="17" rx="3" fill="#2a78d6"><title>13,986</title></rect>
+<line x1="527.2895684126512" x2="567.5541838847947" y1="58" y2="58" class="whisk"/>
+<text class="ink" x="573.5541838847947" y="62">13,986</text>
+<text class="ink" x="242" y="88" text-anchor="end">java · fixed-pool · 5000</text>
+<rect x="250" y="76" width="356.24883493907805" height="17" rx="3" fill="#eb6834"><title>16,964</title></rect>
+<line x1="539.6637496570726" x2="616.9541027472956" y1="84" y2="84" class="whisk"/>
+<text class="ink" x="622.9541027472956" y="88">16,964</text>
+<text class="ink" x="242" y="114" text-anchor="end">java · forkjoin · 5000</text>
+<rect x="250" y="102" width="339.41051963210725" height="17" rx="3" fill="#eb6834"><title>16,162</title></rect>
+<line x1="523.141020359799" x2="598.3344943487905" y1="110" y2="110" class="whisk"/>
+<text class="ink" x="604.3344943487905" y="114">16,162</text>
+<rect x="610" y="10" width="10" height="10" fill="#2a78d6"/><text class="ink" x="624" y="19">Go</text><rect x="660" y="10" width="10" height="10" fill="#eb6834"/><text class="ink" x="674" y="19">Java</text></svg>
