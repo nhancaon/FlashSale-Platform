@@ -71,7 +71,7 @@ jobs:
           mkdir -p sizes
           bytes=$(docker image inspect "$IMAGE:${{ github.sha }}" --format '{{.Size}}')
           echo "${{ matrix.service }},${{ matrix.lang }},$bytes" > sizes/${{ matrix.service }}.csv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: size-${{ matrix.service }}
           path: sizes/
