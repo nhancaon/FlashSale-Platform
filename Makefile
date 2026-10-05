@@ -70,7 +70,7 @@ lint: ## Như CI: golangci-lint (services/.golangci.yml) + Checkstyle (services/
 
 security-scan: ## Như CI: Trivy trên dependency Go, cấu hình, và image đã build (cần make up-apps trước)
 	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -v flashsale-trivy:/root/.cache -w /repo aquasec/trivy:latest fs --quiet --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --skip-dirs services/ratelimiter-java,services/inventory-java,services/order services
-	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -v flashsale-trivy:/root/.cache -w /repo aquasec/trivy:latest config --quiet --severity CRITICAL,HIGH --exit-code 1 .
+	@MSYS_NO_PATHCONV=1 docker run --rm -v "$$PWD:/repo" -v flashsale-trivy:/root/.cache -w /repo aquasec/trivy:latest config --quiet --severity CRITICAL,HIGH --exit-code 1 --skip-dirs deploy/lab .
 	@for i in $$(docker images --format '{{.Repository}}' | grep '^flashsale/' | sort -u); do echo "== $$i"; MSYS_NO_PATHCONV=1 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v flashsale-trivy:/root/.cache aquasec/trivy:latest image --quiet --severity CRITICAL --ignore-unfixed --exit-code 1 $$i:latest || exit 1; done
 
 loadtest-smoke: ## k6 smoke qua gateway + reconcile (cần make up-apps với RL_IP_LIMIT lớn, xem loadtest.yml)

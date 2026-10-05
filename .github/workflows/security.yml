@@ -40,6 +40,10 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
+          # deploy/lab holds the Ansible lab images: a systemd "VM" that must run as root (PID 1, privileged) and the
+          # controller tool. Never deployed. DS-0002 (no USER) is a whole-file check that inline ignores do not cover,
+          # so the folder is skipped here; service images are also checked for a non-root user in docker.yml.
+          skip-dirs: deploy/lab
           severity: CRITICAL,HIGH
           exit-code: "1"
           trivyignores: .trivyignore
