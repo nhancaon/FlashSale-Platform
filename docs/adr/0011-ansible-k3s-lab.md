@@ -72,3 +72,13 @@ apply only on a real difference.
 - The firewall of a container is real (its own network namespace), but the kernel is shared with Docker Desktop.
 - The lab needs about 5 GB of the Docker VM: stop the compose stack (`make down`) before `make lab-up`.
 - One data node: Oracle, Redis and Kafka are single points of failure here, as in the compose stack.
+
+## Addendum: autoscaling and two re-provisioning fixes
+- **HPA** for gateway and inventory (2–4 replicas, 60% of the CPU request, k3s metrics-server). Their Deployments omit
+  `replicas`, otherwise every `site.yml` run would reset the count and fight the autoscaler; `site.yml` stays at
+  `changed=0`. Measured: inventory went from 2 to 4 pods ~15 s after a k6 load started (`make lab-hpa`).
+- **Reinstalled agent:** the k3s role deletes `<host>.node-password.k3s` on the server before joining an agent that
+  has no k3s yet, so a node rebuilt with the same hostname is not rejected for ever.
+- **Data node firewall:** Prometheus and Grafana run in Docker on the data node and call the node's own IP; those
+  packets come from the Docker bridge, which `group_vars/data.yml` trusts (`common_extra_trusted_cidrs`). Before that,
+  every Grafana panel showed "No data".

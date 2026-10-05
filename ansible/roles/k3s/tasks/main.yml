@@ -46,6 +46,18 @@
   check_mode: false
   when: inventory_hostname in groups['k3s_server']
 
+# A reinstalled agent (no k3s binary yet) with a known hostname gets a new node password; the server still holds the
+# old one and rejects the join for ever ("Node password rejected"). Forget the old password before joining.
+- name: Forget the node password of a reinstalled agent
+  ansible.builtin.command: >-
+    k3s kubectl -n kube-system delete secret {{ inventory_hostname }}.node-password.k3s --ignore-not-found
+  delegate_to: "{{ groups['k3s_server'][0] }}"
+  register: k3s_node_password
+  changed_when: "'deleted' in k3s_node_password.stdout"
+  when:
+    - inventory_hostname in groups['k3s_agent']
+    - k3s_installed.rc != 0
+
 - name: Install k3s agent {{ k3s_version }}
   ansible.builtin.command: /usr/local/bin/k3s-install.sh
   environment:

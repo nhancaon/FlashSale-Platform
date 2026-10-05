@@ -62,6 +62,9 @@
     env:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+      # read-only dashboards without login (lab inventory only: screenshots, demos)
+      GF_AUTH_ANONYMOUS_ENABLED: "{{ monitoring_anonymous_viewer | string | lower }}"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     volumes:
       - "{{ app_dir }}/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
       - "{{ app_dir }}/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"

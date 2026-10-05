@@ -7,3 +7,6 @@ app_deploy_replicas:
   order: 2
   outbox_worker: 2
   notification: 2 # two consumers of one group: a drain never stops notifications
+app_deploy_hpa: # name: replicas between min and max, target CPU utilisation (% of the request)
+  gateway: { min: 2, max: 4, cpu: 60 }
+  inventory: { min: 2, max: 4, cpu: 60 }

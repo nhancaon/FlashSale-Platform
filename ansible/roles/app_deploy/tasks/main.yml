@@ -38,7 +38,7 @@
         src: "{{ playbook_dir }}/../deploy/k8s/{{ item }}.j2"
         dest: "{{ app_dir }}/k8s/{{ item }}"
         mode: "0640"
-      loop: [00-namespace.yaml, 10-external.yaml, 20-config.yaml, 30-apps.yaml]
+      loop: [00-namespace.yaml, 10-external.yaml, 20-config.yaml, 30-apps.yaml, 40-hpa.yaml]
 
     - name: Namespace
       ansible.builtin.command: k3s kubectl apply -f {{ app_dir }}/k8s/00-namespace.yaml

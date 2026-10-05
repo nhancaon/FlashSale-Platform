@@ -1,0 +1,4 @@
+---
+# Prometheus and Grafana run in Docker on this node and call the node's own IP (node_exporter, Prometheus for
+# Grafana): those packets come from the Docker bridge, so the firewall must trust it here.
+common_extra_trusted_cidrs: [172.17.0.0/16]

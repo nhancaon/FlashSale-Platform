@@ -1,0 +1,56 @@
+# kubectl -n flashsale get hpa every 15 s while loadtest/hpa.js (100 VUs, ~24 000 req/s, 0 errors) loads inventory
+# columns: name, reference, cpu now/target, min, max, replicas, age
+== 20:14:39
+gateway     Deployment/gateway     cpu: 1%/60%   2     4     2     65s
+inventory   Deployment/inventory   cpu: 1%/60%   2     4     2     65s
+== 20:14:55
+gateway     Deployment/gateway     cpu: 1%/60%     2     4     2     80s
+inventory   Deployment/inventory   cpu: 114%/60%   2     4     2     80s
+== 20:15:11
+gateway     Deployment/gateway     cpu: 1%/60%     2     4     2     96s
+inventory   Deployment/inventory   cpu: 998%/60%   2     4     4     96s
+== 20:15:26
+gateway     Deployment/gateway     cpu: 3%/60%     2     4     2     112s
+inventory   Deployment/inventory   cpu: 996%/60%   2     4     4     112s
+== 20:15:42
+gateway     Deployment/gateway     cpu: 3%/60%     2     4     2     2m8s
+inventory   Deployment/inventory   cpu: 995%/60%   2     4     4     2m8s
+== 20:15:58
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     2m24s
+inventory   Deployment/inventory   cpu: 994%/60%   2     4     4     2m24s
+== 20:16:14
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     2m39s
+inventory   Deployment/inventory   cpu: 994%/60%   2     4     4     2m39s
+== 20:16:30
+gateway     Deployment/gateway     cpu: 1%/60%     2     4     2     2m55s
+inventory   Deployment/inventory   cpu: 998%/60%   2     4     4     2m55s
+== 20:16:45
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     3m11s
+inventory   Deployment/inventory   cpu: 994%/60%   2     4     4     3m11s
+== 20:17:01
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     3m27s
+inventory   Deployment/inventory   cpu: 994%/60%   2     4     4     3m27s
+== 20:17:17
+gateway     Deployment/gateway     cpu: 3%/60%     2     4     2     3m43s
+inventory   Deployment/inventory   cpu: 998%/60%   2     4     4     3m43s
+== 20:17:33
+gateway     Deployment/gateway     cpu: 1%/60%     2     4     2     3m58s
+inventory   Deployment/inventory   cpu: 994%/60%   2     4     4     3m58s
+== 20:17:48
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     4m14s
+inventory   Deployment/inventory   cpu: 999%/60%   2     4     4     4m14s
+== 20:18:04
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     4m30s
+inventory   Deployment/inventory   cpu: 988%/60%   2     4     4     4m30s
+== 20:18:20
+gateway     Deployment/gateway     cpu: 1%/60%     2     4     2     4m45s
+inventory   Deployment/inventory   cpu: 998%/60%   2     4     4     4m45s
+== 20:18:35
+gateway     Deployment/gateway     cpu: 2%/60%     2     4     2     5m
+inventory   Deployment/inventory   cpu: 753%/60%   2     4     4     5m
+== 20:18:51
+gateway     Deployment/gateway     cpu: 1%/60%    2     4     2     5m16s
+inventory   Deployment/inventory   cpu: 37%/60%   2     4     4     5m16s
+== 20:19:06
+gateway     Deployment/gateway     cpu: 1%/60%   2     4     2     5m31s
+inventory   Deployment/inventory   cpu: 1%/60%   2     4     4     5m31s

@@ -21,7 +21,9 @@ metadata:
   namespace: {{ app_namespace }}
   labels: { app: {{ app.name }} }
 spec:
+{% if app.name not in app_deploy_hpa %}
   replicas: {{ app.replicas }}
+{% endif %}
   selector:
     matchLabels: { app: {{ app.name }} }
   strategy:

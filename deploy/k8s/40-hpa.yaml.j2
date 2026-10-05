@@ -1,0 +1,21 @@
+# Rendered by Ansible (role app_deploy). Horizontal scaling of the stateless entry points on CPU (metrics-server of k3s).
+# Their Deployments omit `replicas`, so a site.yml run never fights the autoscaler.
+{% for name, hpa in app_deploy_hpa.items() %}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ name }}
+  namespace: {{ app_namespace }}
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: {{ name }} }
+  minReplicas: {{ hpa.min }}
+  maxReplicas: {{ hpa.max }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ hpa.cpu }} }
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 60 } # quick enough to see in a demo, not flapping
+{% endfor %}

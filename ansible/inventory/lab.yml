@@ -6,6 +6,7 @@ all:
     # bootstrap account of a fresh server (bootstrap_user) to create it.
     ansible_user: deploy
     ansible_ssh_private_key_file: /root/.ssh-lab-rw/id_ed25519
+    monitoring_anonymous_viewer: true # lab only: Grafana dashboards readable without login (screenshots)
   children:
     data:
       hosts:

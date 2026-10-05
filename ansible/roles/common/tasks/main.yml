@@ -54,7 +54,7 @@
       community.general.ufw:
         rule: allow
         from_ip: "{{ item }}"
-      loop: "{{ trusted_cidrs }}"
+      loop: "{{ trusted_cidrs + common_extra_trusted_cidrs }}"
 
     # k3s nodes: pods and services talk to the node (DNS, API server, kubelet probes) and to pods on other nodes.
     - name: Firewall allows the k3s pod and service networks
