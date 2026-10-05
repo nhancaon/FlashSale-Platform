@@ -58,7 +58,7 @@ jobs:
           echo "image user: '$user'"
           [ -n "$user" ] && [ "$user" != root ] && [ "$user" != 0 ] && [ "$user" != "0:0" ]
       - name: Trivy scan (fail on fixable CRITICAL)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}:${{ github.sha }}
           severity: CRITICAL
